@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BLL_QLNH/BLL_QLNH.csproj" />
+  <Project Path="DAL_QLNH/DAL_QLNH.csproj" />
+  <Project Path="DTO_QLNH/DTO_QLNH.csproj" />
+  <Project Path="GUI_QLNH/GUI_QLNH.csproj" />
+</Solution>
