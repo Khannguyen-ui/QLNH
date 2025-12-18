@@ -418,5 +418,15 @@ namespace GUI_QLNH
             ApplyTheme();                  // ép lại bảng màu khi form đã hiển thị
             PaintFlat(pnlSidebar, ColSidebar);
         }
+
+        private void picNhanVien_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void picDatTiec_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
