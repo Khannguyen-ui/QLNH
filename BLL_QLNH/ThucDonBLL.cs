@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DTO_QLNH;
-using DAL_QLDT;
+using DAL_QLNH;
+
 
 namespace BLL_QLNH
 {

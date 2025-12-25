@@ -6,6 +6,7 @@
 	  <Nullable>disable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <StartupObject>GUI_QLNH.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

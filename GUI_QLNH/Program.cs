@@ -1,44 +1,49 @@
 ﻿using System;
 using System.Threading;
 using System.Windows.Forms;
-using GUI_QLNH; 
+using GUI_QLNH;
 using DTO_QLNH;
 
 namespace GUI_QLNH
-
 {
     internal static class Program
     {
         [STAThread]
         static void Main()
         {
-            // Bật style & text rendering chuẩn WinForms
+            // --- THÊM DÒNG NÀY ĐỂ KIỂM TRA ---
+            // Nếu hiện bảng này nghĩa là lỗi Exit Code 0 đã được sửa
+            MessageBox.Show("CHƯƠNG TRÌNH ĐÃ CHẠY VÀO MAIN!");
+            // ---------------------------------
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            // Bắt lỗi toàn cục để không bị crash “đột tử”
+            // Bắt lỗi toàn cục
             Application.ThreadException += OnThreadException;
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
 
             while (true)
             {
-                // Show login dialog
+                // Mở form đăng nhập
                 using (var login = new FormDangNhap())
                 {
                     login.StartPosition = FormStartPosition.CenterScreen;
                     var result = login.ShowDialog();
 
+                    // Nếu đóng form hoặc đăng nhập thất bại thì thoát luôn
                     if (result != DialogResult.OK || login.LoggedInUser == null)
                     {
-                        // user cancelled or failed -> exit app
                         return;
                     }
 
-                    // Got a logged in user -> run appropriate main form
+                    // Lấy thông tin user đăng nhập thành công
                     AppUser user = login.LoggedInUser;
                     try
                     {
                         var role = user?.Role ?? string.Empty;
+
+                        // Phân quyền mở form
                         if (string.Equals(role, "NhanVien", StringComparison.OrdinalIgnoreCase) ||
                             role.IndexOf("nhan", StringComparison.OrdinalIgnoreCase) >= 0)
                         {
@@ -55,21 +60,22 @@ namespace GUI_QLNH
                                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                         return;
                     }
-
-                    // When main form closes, loop back to show login again
                 }
             }
         }
 
-        // ===== Handlers lỗi toàn cục =====
         private static void OnThreadException(object sender, ThreadExceptionEventArgs e)
         {
-            MessageBox.Show(e.Exception.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            MessageBox.Show(e.Exception.Message, "Lỗi Thread", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
         private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            try { MessageBox.Show(Convert.ToString(e.ExceptionObject), "Lỗi không xử lý", MessageBoxButtons.OK, MessageBoxIcon.Error); } catch { }
+            try
+            {
+                MessageBox.Show(e.ExceptionObject.ToString(), "Lỗi Fatal", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch { }
         }
     }
 }

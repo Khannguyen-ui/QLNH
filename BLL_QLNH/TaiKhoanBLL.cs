@@ -1,5 +1,4 @@
-﻿using DAL_QLDT;
-using DAL_QLNH;
+﻿using DAL_QLNH;
 using DTO_QLNH;
 
 namespace BLL_QLNH

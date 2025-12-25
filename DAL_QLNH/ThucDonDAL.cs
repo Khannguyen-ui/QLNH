@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using DTO_QLNH;
 
-namespace DAL_QLDT
+namespace DAL_QLNH
 {
     public class ThucDonDAL
     {
         private static readonly string connectionString =
-            @"Data Source=LAPTOP-KRERKDGK\SQLEXPRESS02;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
+            @"Data Source=VANKHAN;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
 
         private static SqlConnection Conn() => new SqlConnection(connectionString);
 

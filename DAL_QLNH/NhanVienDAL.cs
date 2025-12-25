@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -18,7 +18,7 @@ namespace DAL_QLNH
     public static class NhanVienDAL
     {
         private static readonly string ConnStr =
-            "Data Source=LAPTOP-KRERKDGK\\SQLEXPRESS02;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
+            "Data Source=VANKHAN;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
 
         // ========= Helpers =========
         private static string Sha256(string s)

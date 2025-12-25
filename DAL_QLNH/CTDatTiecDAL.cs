@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace DAL_QLNH
 {
@@ -10,7 +10,7 @@ namespace DAL_QLNH
     {
         // Kết nối của bạn
         private const string CN =
-            @"Data Source=LAPTOP-KRERKDGK\SQLEXPRESS02;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
+            @"Data Source=VANKHAN;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
 
         private SqlConnection Conn() => new SqlConnection(CN);
 

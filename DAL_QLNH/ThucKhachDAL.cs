@@ -1,7 +1,9 @@
-﻿using DTO_QLNH;
+﻿
+using DTO_QLNH;
 using System;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
+
 
 namespace DAL_QLNH
 {
@@ -9,7 +11,7 @@ namespace DAL_QLNH
     {
         // Chuỗi kết nối của bạn (giữ nguyên máy bạn)
         private const string _cn =
-            @"Data Source=LAPTOP-KRERKDGK\SQLEXPRESS02;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
+            @"Data Source=VANKHAN;Initial Catalog=QLNHS;Integrated Security=True;TrustServerCertificate=True";
 
         private SqlConnection Conn() => new SqlConnection(_cn);
 

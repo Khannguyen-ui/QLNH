@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 
 namespace DAL_QLNH
 {
     public class ThongKeDAL
     {
         private const string CONN =
-            "Server=LAPTOP-KRERKDGK\\SQLEXPRESS02;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
+            "Server=VANKHAN;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
 
         private static DataTable Fill(SqlCommand cmd)
         {

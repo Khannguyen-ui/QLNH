@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using DTO_QLNH;
 
 namespace DAL_QLNH
@@ -9,7 +9,7 @@ namespace DAL_QLNH
     public class DatTiecDAL
     {
         private readonly string _cnStr =
-            "Server=LAPTOP-KRERKDGK\\SQLEXPRESS02;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
+            "Server=VANKHAN;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
 
         /* ======================= GRID CHÍNH ======================= */
 
