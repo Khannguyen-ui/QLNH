@@ -2,8 +2,8 @@
 using System.Data;
 using System.Linq;
 using System.Windows.Forms;
-using BLL_QLNHS;
-using DTO_QLNHS;
+using BLL_QLNH;
+using DTO_QLNH;
 
 namespace GUI_QLNHS
 {

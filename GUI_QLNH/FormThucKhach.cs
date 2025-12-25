@@ -4,8 +4,8 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using BLL_QLNHS;
-using DTO_QLNHS;
+using BLL_QLNH;
+using DTO_QLNH;
 using GUI_QLNH.Common;
 
 namespace GUI_QLNHS

@@ -2,6 +2,8 @@
 using System.Windows.Forms;
 using System.Drawing;
 
+System.Windows.Forms.Timer timerClock;
+
 namespace GUI_QLNH
 {
     partial class FormMenuNhanVien
@@ -16,7 +18,7 @@ namespace GUI_QLNH
         private Label lblGreet;
         private Label lblTime;
         private Label lblDate;
-        private Timer timerClock;
+        private System.Windows.Forms.Timer timerClock;
 
         private PictureBox picLogo;
         private Button btnInfo;

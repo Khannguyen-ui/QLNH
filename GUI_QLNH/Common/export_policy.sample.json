@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "forms": {
+    "NhanVien": true,
+    "ThucDon": true,
+    "ThucKhach": true,
+    "HoaDon": true,
+    "DatTiec": true,
+    "ThongKe": true
+  }
+} 
