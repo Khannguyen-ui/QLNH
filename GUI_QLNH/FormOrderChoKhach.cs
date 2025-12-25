@@ -12,7 +12,7 @@ namespace GUI_QLNH
     {
         // =============== CẤU HÌNH KẾT NỐI ===============
         private const string CONN =
-            "Server=LAPTOP-KRERKDGK\\SQLEXPRESS02;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
+            "Server=VANKHAN;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
 
         // Mã nhân viên hiện tại (FormMenu set trước khi Show)
         public string CurrentManv { get; set; } = "NV01";

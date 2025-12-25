@@ -10,7 +10,7 @@ namespace GUI_QLNH
     public partial class FormThanhToanHoaDon : Form
     {
         private const string CONN =
-            "Server=LAPTOP-KRERKDGK\\SQLEXPRESS02;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
+            "Server=VANKHAN;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
 
         public string SoPhieu { get; private set; }
         /// <summary> Mã NV đang đăng nhập/thanh toán (ghi vào NVTT hoặc MaNV nếu có cột) </summary>

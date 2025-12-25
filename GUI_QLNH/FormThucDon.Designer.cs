@@ -220,6 +220,7 @@ namespace GUI_QLNH
             // 
             // btnThem
             // 
+            this.btnThem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnThem.Location = new System.Drawing.Point(45, 584);
             this.btnThem.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnThem.Name = "btnThem";
@@ -230,6 +231,7 @@ namespace GUI_QLNH
             // 
             // btnSua
             // 
+            this.btnSua.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnSua.Location = new System.Drawing.Point(187, 584);
             this.btnSua.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSua.Name = "btnSua";
@@ -240,6 +242,7 @@ namespace GUI_QLNH
             // 
             // btnLuu
             // 
+            this.btnLuu.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnLuu.Location = new System.Drawing.Point(329, 584);
             this.btnLuu.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnLuu.Name = "btnLuu";
@@ -250,6 +253,7 @@ namespace GUI_QLNH
             // 
             // btnBoQua
             // 
+            this.btnBoQua.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnBoQua.Location = new System.Drawing.Point(470, 584);
             this.btnBoQua.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnBoQua.Name = "btnBoQua";
@@ -260,6 +264,7 @@ namespace GUI_QLNH
             // 
             // btnXoa
             // 
+            this.btnXoa.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnXoa.Location = new System.Drawing.Point(611, 584);
             this.btnXoa.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnXoa.Name = "btnXoa";
@@ -270,6 +275,7 @@ namespace GUI_QLNH
             // 
             // btnMoi
             // 
+            this.btnMoi.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnMoi.Location = new System.Drawing.Point(753, 584);
             this.btnMoi.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnMoi.Name = "btnMoi";
@@ -280,6 +286,7 @@ namespace GUI_QLNH
             // 
             // btnExportExcel
             // 
+            this.btnExportExcel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnExportExcel.Location = new System.Drawing.Point(895, 584);
             this.btnExportExcel.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnExportExcel.Name = "btnExportExcel";
@@ -290,6 +297,7 @@ namespace GUI_QLNH
             // 
             // btnImportCsv
             // 
+            this.btnImportCsv.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnImportCsv.Location = new System.Drawing.Point(1036, 584);
             this.btnImportCsv.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnImportCsv.Name = "btnImportCsv";
@@ -300,6 +308,7 @@ namespace GUI_QLNH
             // 
             // btnThoat
             // 
+            this.btnThoat.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.btnThoat.Location = new System.Drawing.Point(1178, 584);
             this.btnThoat.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnThoat.Name = "btnThoat";

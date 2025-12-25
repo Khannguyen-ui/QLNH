@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.PortableExecutable;
 using System.Windows.Forms;
 
 namespace GUI_QLNH
@@ -28,7 +27,7 @@ namespace GUI_QLNH
         private static readonly Color ColBtnText = Color.FromArgb(23, 23, 23);
         private static readonly Color ColBorder = Color.FromArgb(229, 231, 235);
 
-        // Giảm giật – chỉ bật khi runtime, tránh Designer bị “mất” vẽ
+        // Giảm giật – chỉ bật khi runtime
         protected override CreateParams CreateParams
         {
             get
@@ -44,7 +43,7 @@ namespace GUI_QLNH
             _currentUser = user;
             InitializeComponent();
 
-            // DoubleBuffer an toàn cho Designer
+            // DoubleBuffer an toàn
             TryEnableDoubleBuffer(pnlContent);
             TryEnableDoubleBuffer(pnlContentBorder);
             TryEnableDoubleBuffer(pnlHeader);
@@ -53,27 +52,29 @@ namespace GUI_QLNH
 
             ApplyTheme();
 
-            // placeholder shown when no child opened
+            // Placeholder
             EnsurePlaceholder();
             ShowPlaceholder();
 
-            // Đồng hồ
-            if (timerClock != null)
+            // --- SỬA LỖI TIMER: Tự tạo nếu Designer chưa có ---
+            if (timerClock == null)
             {
-                timerClock.Interval = 1000;
-                timerClock.Tick -= UpdateClock;
-                timerClock.Tick += UpdateClock;
-                UpdateClock(null, EventArgs.Empty);
-                timerClock.Enabled = true;
+                timerClock = new System.Windows.Forms.Timer();
+                this.components?.Add(timerClock); // Gắn vào components để tự dispose
             }
+
+            timerClock.Interval = 1000;
+            timerClock.Tick -= UpdateClock;
+            timerClock.Tick += UpdateClock;
+            UpdateClock(null, EventArgs.Empty);
+            timerClock.Start(); // Dùng Start() thay vì Enabled = true
+            // --------------------------------------------------
 
             // Xin chào
             var name = string.IsNullOrWhiteSpace(user?.FullName) ? user?.UserName : user.FullName;
             if (string.IsNullOrWhiteSpace(name)) name = "Nhân viên";
             lblGreet.Text = $"Xin chào, {name}";
             Text = "MainNhanVien";
-
-            // Do not auto-open any child on startup; placeholder remains until user selects a function
         }
 
         private static void TryEnableDoubleBuffer(Control c)
@@ -145,8 +146,8 @@ namespace GUI_QLNH
         private void UpdateClock(object sender, EventArgs e)
         {
             var now = DateTime.Now;
-            lblTime.Text = now.ToString("h:mm:ss tt");
-            lblDate.Text = now.ToString("dddd, dd MMMM yyyy");
+            if (lblTime != null) lblTime.Text = now.ToString("h:mm:ss tt");
+            if (lblDate != null) lblDate.Text = now.ToString("dddd, dd MMMM yyyy");
         }
 
         // ===== Open child vào khung content =====
@@ -156,15 +157,22 @@ namespace GUI_QLNH
             {
                 var asm = Assembly.GetExecutingAssembly();
                 var t = asm.GetType(formQualifiedName, false, false) ?? Type.GetType(formQualifiedName, false, false);
+
+                // Nếu không tìm thấy class, có thể do sai Namespace. Thử tìm lỏng hơn:
+                if (t == null)
+                {
+                    t = asm.GetTypes().FirstOrDefault(x => x.Name == formQualifiedName.Split('.').Last());
+                }
+
                 if (t == null || !typeof(Form).IsAssignableFrom(t)) throw new InvalidOperationException();
 
                 var child = Activator.CreateInstance(t) as Form ?? throw new InvalidOperationException();
                 OpenChild(child, btnSender);
                 Text = $"MainNhanVien - {title}";
             }
-            catch
+            catch (Exception ex)
             {
-                MessageBox.Show($"Chưa có form \"{title}\" trong project.", "Thông báo",
+                MessageBox.Show($"Chưa mở được form \"{title}\".\nLỗi: {ex.Message}", "Thông báo",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
@@ -186,7 +194,6 @@ namespace GUI_QLNH
             child.FormBorderStyle = FormBorderStyle.None;
             child.Dock = DockStyle.Fill;
 
-            // hide placeholder and add child on top
             HidePlaceholder();
             pnlContent.SuspendLayout();
             pnlContent.Controls.Add(child);
@@ -202,60 +209,42 @@ namespace GUI_QLNH
         private void btnOrder_Click(object sender, EventArgs e)
             => OpenChildSafe("GUI_QLNH.FormOrderChoKhach", sender, "Order cho khách");
 
+        // --- ĐÂY LÀ PHẦN ĐÃ SỬA CHỮA ---
         private void btnLogout_Click(object sender, EventArgs e)
         {
             if (MessageBox.Show("Bạn muốn đăng xuất?", "Xác nhận",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
-
-            try
+                MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                timerClock.Enabled = false;
-                timerClock.Tick -= UpdateClock;
-
-                var login = new FormDangNhap();
-                Hide();
-                var dr = login.ShowDialog();
-
-                if (dr == DialogResult.OK && login.LoggedInUser != null)
+                // Tắt timer an toàn
+                if (timerClock != null)
                 {
-                    var user = login.LoggedInUser;
-                    try
-                    {
-                        if (!string.IsNullOrWhiteSpace(user.Role) && user.Role.IndexOf("nhan", StringComparison.OrdinalIgnoreCase) >= 0)
-                        {
-                            var menuNv = new FormMenuNhanVien(user);
-                            menuNv.StartPosition = FormStartPosition.CenterScreen;
-                            menuNv.Show();
-                        }
-                        else
-                        {
-                            var menu = new FormMenu(user);
-                            menu.StartPosition = FormStartPosition.CenterScreen;
-                            menu.Show();
-                        }
-                    }
-                    catch { }
-
-                    Close();
-                    return;
+                    timerClock.Stop();
                 }
 
-                // Cancelled or login failed -> exit
-                Close();
-            }
-            catch
-            {
-                Close();
+                // Đóng form này -> Program.cs sẽ tự mở lại Form Đăng nhập
+                this.Close();
             }
         }
+        // --------------------------------
 
         private void btnLapThanhToan_Click(object sender, EventArgs e)
         {
             try
             {
+                // Đảm bảo bạn đã có class FormLapThanhToan
                 var f = new FormLapThanhToan();
-                // pass current user id if available
-                try { f.CurrentManv = _currentUser?.UserName; } catch { }
+
+                // Truyền mã nhân viên vào nếu Form đó có property này
+                try
+                {
+                    // Dùng Reflection để gán tránh lỗi biên dịch nếu chưa có Property
+                    var prop = f.GetType().GetProperty("CurrentManv");
+                    if (prop != null && prop.CanWrite)
+                    {
+                        prop.SetValue(f, _currentUser?.UserName);
+                    }
+                }
+                catch { }
 
                 OpenChild(f, sender);
                 Text = "MainNhanVien - Lập thanh toán";
@@ -282,7 +271,6 @@ namespace GUI_QLNH
                 _lblPlaceholder.BackColor = Color.Transparent;
                 _lblPlaceholder.Text = "Vui lòng chọn chức năng ở thanh bên trái";
 
-                // add as first control so children (Dock=Fill) appear over it
                 pnlContent.Controls.Add(_lblPlaceholder);
                 _lblPlaceholder.BringToFront();
             }
@@ -310,7 +298,7 @@ namespace GUI_QLNH
             {
                 if (timerClock != null)
                 {
-                    timerClock.Enabled = false;
+                    timerClock.Stop();
                     timerClock.Tick -= UpdateClock;
                 }
                 if (_activeChild != null)
@@ -318,8 +306,6 @@ namespace GUI_QLNH
                     _activeChild.Close();
                     _activeChild.Dispose();
                     _activeChild = null;
-                    // when active child closed, show placeholder
-                    ShowPlaceholder();
                 }
             }
             catch { }

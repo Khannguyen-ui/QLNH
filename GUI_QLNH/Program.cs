@@ -11,10 +11,7 @@ namespace GUI_QLNH
         [STAThread]
         static void Main()
         {
-            // --- THÊM DÒNG NÀY ĐỂ KIỂM TRA ---
-            // Nếu hiện bảng này nghĩa là lỗi Exit Code 0 đã được sửa
-            MessageBox.Show("CHƯƠNG TRÌNH ĐÃ CHẠY VÀO MAIN!");
-            // ---------------------------------
+           
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
