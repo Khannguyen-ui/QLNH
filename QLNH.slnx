@@ -3,4 +3,5 @@
   <Project Path="DAL_QLNH/DAL_QLNH.csproj" />
   <Project Path="DTO_QLNH/DTO_QLNH.csproj" />
   <Project Path="GUI_QLNH/GUI_QLNH.csproj" />
+  <Project Path="TestProject1/TestProject1.csproj" Id="3c5bd1de-58f9-417b-9557-9247e4ec18b7" />
 </Solution>

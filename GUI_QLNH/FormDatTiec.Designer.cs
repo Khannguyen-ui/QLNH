@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using System.Drawing;
 
 namespace GUI_QLNH
 {
@@ -17,399 +18,395 @@ namespace GUI_QLNH
 
         private void InitializeComponent()
         {
-            this.splitMain = new System.Windows.Forms.SplitContainer();
-            this.tv = new System.Windows.Forms.TreeView();
-            this.pnlRight = new System.Windows.Forms.Panel();
-            this.dgv = new System.Windows.Forms.DataGridView();
-            this.pnlButtons = new System.Windows.Forms.Panel();
-            this.btnThoat = new System.Windows.Forms.Button();
-            this.btnMoi = new System.Windows.Forms.Button();
-            this.btnXoa = new System.Windows.Forms.Button();
-            this.btnBoQua = new System.Windows.Forms.Button();
-            this.btnLuu = new System.Windows.Forms.Button();
-            this.btnSua = new System.Windows.Forms.Button();
-            this.btnThem = new System.Windows.Forms.Button();
-            this.btnChiTiet = new System.Windows.Forms.Button();
-            this.pnlForm = new System.Windows.Forms.Panel();
-            this.btnTim = new System.Windows.Forms.Button();
-            this.txtSearch = new System.Windows.Forms.TextBox();
-            this.cboCa = new System.Windows.Forms.ComboBox();
-            this.txtPhong = new System.Windows.Forms.TextBox();
-            this.nudSoLuong = new System.Windows.Forms.NumericUpDown();
-            this.cboMaNV = new System.Windows.Forms.ComboBox();
-            this.cboMaTK = new System.Windows.Forms.ComboBox();
-            this.dtpNgayDK = new System.Windows.Forms.DateTimePicker();
-            this.txtSoPhieu = new System.Windows.Forms.TextBox();
-            this.lblSearch = new System.Windows.Forms.Label();
-            this.lblCa = new System.Windows.Forms.Label();
-            this.lblPhong = new System.Windows.Forms.Label();
-            this.lblSL = new System.Windows.Forms.Label();
-            this.lblNoiSinh = new System.Windows.Forms.Label();
-            this.lblTen = new System.Windows.Forms.Label();
-            this.lblNgay = new System.Windows.Forms.Label();
-            this.lblMa = new System.Windows.Forms.Label();
-            this.lblTitle = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.splitMain)).BeginInit();
-            this.splitMain.Panel1.SuspendLayout();
-            this.splitMain.Panel2.SuspendLayout();
-            this.splitMain.SuspendLayout();
-            this.pnlRight.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgv)).BeginInit();
-            this.pnlButtons.SuspendLayout();
-            this.pnlForm.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudSoLuong)).BeginInit();
-            this.SuspendLayout();
+            splitMain = new SplitContainer();
+            tv = new TreeView();
+            pnlRight = new Panel();
+            dgv = new DataGridView();
+            pnlButtons = new Panel();
+            btnThoat = new Button();
+            btnMoi = new Button();
+            btnXoa = new Button();
+            btnBoQua = new Button();
+            btnLuu = new Button();
+            btnSua = new Button();
+            btnThem = new Button();
+            btnChiTiet = new Button();
+            pnlForm = new Panel();
+            btnTim = new Button();
+            txtSearch = new TextBox();
+            cboCa = new ComboBox();
+            cboPhong = new ComboBox();
+            nudSoLuong = new NumericUpDown();
+            cboMaNV = new ComboBox();
+            cboMaTK = new ComboBox();
+            dtpNgayDK = new DateTimePicker();
+            txtSoPhieu = new TextBox();
+            lblSearch = new Label();
+            lblCa = new Label();
+            lblPhong = new Label();
+            lblSL = new Label();
+            lblNoiSinh = new Label();
+            lblTen = new Label();
+            lblNgay = new Label();
+            lblMa = new Label();
+            lblTitle = new Label();
+            ((System.ComponentModel.ISupportInitialize)splitMain).BeginInit();
+            splitMain.Panel1.SuspendLayout();
+            splitMain.Panel2.SuspendLayout();
+            splitMain.SuspendLayout();
+            pnlRight.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgv).BeginInit();
+            pnlButtons.SuspendLayout();
+            pnlForm.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudSoLuong).BeginInit();
+            SuspendLayout();
             // 
             // splitMain
             // 
-            this.splitMain.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitMain.Location = new System.Drawing.Point(0, 0);
-            this.splitMain.Name = "splitMain";
+            splitMain.Dock = DockStyle.Fill;
+            splitMain.Location = new Point(0, 0);
+            splitMain.Name = "splitMain";
             // 
             // splitMain.Panel1
             // 
-            this.splitMain.Panel1.Controls.Add(this.tv);
-            this.splitMain.Panel1MinSize = 160;
+            splitMain.Panel1.Controls.Add(tv);
+            splitMain.Panel1MinSize = 160;
             // 
             // splitMain.Panel2
             // 
-            this.splitMain.Panel2.Controls.Add(this.pnlRight);
-            this.splitMain.Size = new System.Drawing.Size(1286, 719);
-            this.splitMain.SplitterDistance = 278;
-            this.splitMain.TabIndex = 0;
+            splitMain.Panel2.Controls.Add(pnlRight);
+            splitMain.Size = new Size(1286, 719);
+            splitMain.SplitterDistance = 278;
+            splitMain.TabIndex = 0;
             // 
             // tv
             // 
-            this.tv.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tv.FullRowSelect = true;
-            this.tv.HideSelection = false;
-            this.tv.Location = new System.Drawing.Point(0, 0);
-            this.tv.Name = "tv";
-            this.tv.Size = new System.Drawing.Size(278, 719);
-            this.tv.TabIndex = 0;
-            this.tv.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.tv_BeforeExpand);
-            this.tv.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tv_AfterSelect);
+            tv.Dock = DockStyle.Fill;
+            tv.FullRowSelect = true;
+            tv.HideSelection = false;
+            tv.Location = new Point(0, 0);
+            tv.Name = "tv";
+            tv.Size = new Size(278, 719);
+            tv.TabIndex = 0;
+            tv.BeforeExpand += tv_BeforeExpand;
+            tv.AfterSelect += tv_AfterSelect;
             // 
             // pnlRight
             // 
-            this.pnlRight.Controls.Add(this.dgv);
-            this.pnlRight.Controls.Add(this.pnlButtons);
-            this.pnlRight.Controls.Add(this.pnlForm);
-            this.pnlRight.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pnlRight.Location = new System.Drawing.Point(0, 0);
-            this.pnlRight.Name = "pnlRight";
-            this.pnlRight.Size = new System.Drawing.Size(1004, 719);
-            this.pnlRight.TabIndex = 0;
+            pnlRight.Controls.Add(dgv);
+            pnlRight.Controls.Add(pnlButtons);
+            pnlRight.Controls.Add(pnlForm);
+            pnlRight.Dock = DockStyle.Fill;
+            pnlRight.Location = new Point(0, 0);
+            pnlRight.Name = "pnlRight";
+            pnlRight.Size = new Size(1004, 719);
+            pnlRight.TabIndex = 0;
             // 
             // dgv
             // 
-            this.dgv.AllowUserToAddRows = false;
-            this.dgv.AllowUserToDeleteRows = false;
-            this.dgv.ColumnHeadersHeight = 34;
-            this.dgv.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dgv.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
-            this.dgv.Location = new System.Drawing.Point(0, 220);
-            this.dgv.Name = "dgv";
-            this.dgv.RowHeadersVisible = false;
-            this.dgv.RowHeadersWidth = 62;
-            this.dgv.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgv.Size = new System.Drawing.Size(1004, 435);
-            this.dgv.TabIndex = 1;
-            this.dgv.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_CellClick);
+            dgv.AllowUserToAddRows = false;
+            dgv.AllowUserToDeleteRows = false;
+            dgv.ColumnHeadersHeight = 34;
+            dgv.Dock = DockStyle.Fill;
+            dgv.EditMode = DataGridViewEditMode.EditOnEnter;
+            dgv.Location = new Point(0, 220);
+            dgv.Name = "dgv";
+            dgv.RowHeadersVisible = false;
+            dgv.RowHeadersWidth = 62;
+            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgv.Size = new Size(1004, 435);
+            dgv.TabIndex = 1;
+            dgv.CellClick += dgv_CellClick;
             // 
             // pnlButtons
             // 
-            this.pnlButtons.Controls.Add(this.btnThoat);
-            this.pnlButtons.Controls.Add(this.btnMoi);
-            this.pnlButtons.Controls.Add(this.btnXoa);
-            this.pnlButtons.Controls.Add(this.btnBoQua);
-            this.pnlButtons.Controls.Add(this.btnLuu);
-            this.pnlButtons.Controls.Add(this.btnSua);
-            this.pnlButtons.Controls.Add(this.btnThem);
-            this.pnlButtons.Controls.Add(this.btnChiTiet);
-            this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Location = new System.Drawing.Point(0, 655);
-            this.pnlButtons.Name = "pnlButtons";
-            this.pnlButtons.Size = new System.Drawing.Size(1004, 64);
-            this.pnlButtons.TabIndex = 2;
+            pnlButtons.Controls.Add(btnThoat);
+            pnlButtons.Controls.Add(btnMoi);
+            pnlButtons.Controls.Add(btnXoa);
+            pnlButtons.Controls.Add(btnBoQua);
+            pnlButtons.Controls.Add(btnLuu);
+            pnlButtons.Controls.Add(btnSua);
+            pnlButtons.Controls.Add(btnThem);
+            pnlButtons.Controls.Add(btnChiTiet);
+            pnlButtons.Dock = DockStyle.Bottom;
+            pnlButtons.Location = new Point(0, 655);
+            pnlButtons.Name = "pnlButtons";
+            pnlButtons.Size = new Size(1004, 64);
+            pnlButtons.TabIndex = 2;
             // 
             // btnThoat
             // 
-            this.btnThoat.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnThoat.Location = new System.Drawing.Point(650, 0);
-            this.btnThoat.Name = "btnThoat";
-            this.btnThoat.Size = new System.Drawing.Size(90, 64);
-            this.btnThoat.TabIndex = 0;
-            this.btnThoat.Text = "Thoát";
-            this.btnThoat.Click += new System.EventHandler(this.btnThoat_Click);
+            btnThoat.Dock = DockStyle.Left;
+            btnThoat.Location = new Point(650, 0);
+            btnThoat.Name = "btnThoat";
+            btnThoat.Size = new Size(90, 64);
+            btnThoat.TabIndex = 0;
+            btnThoat.Text = "Thoát";
+            btnThoat.Click += btnThoat_Click;
             // 
             // btnMoi
             // 
-            this.btnMoi.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnMoi.Location = new System.Drawing.Point(560, 0);
-            this.btnMoi.Name = "btnMoi";
-            this.btnMoi.Size = new System.Drawing.Size(90, 64);
-            this.btnMoi.TabIndex = 1;
-            this.btnMoi.Text = "Mới";
-            this.btnMoi.Click += new System.EventHandler(this.btnMoi_Click);
+            btnMoi.Dock = DockStyle.Left;
+            btnMoi.Location = new Point(560, 0);
+            btnMoi.Name = "btnMoi";
+            btnMoi.Size = new Size(90, 64);
+            btnMoi.TabIndex = 1;
+            btnMoi.Text = "Mới";
+            btnMoi.Click += btnMoi_Click;
             // 
             // btnXoa
             // 
-            this.btnXoa.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnXoa.Location = new System.Drawing.Point(470, 0);
-            this.btnXoa.Name = "btnXoa";
-            this.btnXoa.Size = new System.Drawing.Size(90, 64);
-            this.btnXoa.TabIndex = 2;
-            this.btnXoa.Text = "Xóa";
-            this.btnXoa.Click += new System.EventHandler(this.btnXoa_Click);
+            btnXoa.Dock = DockStyle.Left;
+            btnXoa.Location = new Point(470, 0);
+            btnXoa.Name = "btnXoa";
+            btnXoa.Size = new Size(90, 64);
+            btnXoa.TabIndex = 2;
+            btnXoa.Text = "Xóa";
+            btnXoa.Click += btnXoa_Click;
             // 
             // btnBoQua
             // 
-            this.btnBoQua.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnBoQua.Location = new System.Drawing.Point(380, 0);
-            this.btnBoQua.Name = "btnBoQua";
-            this.btnBoQua.Size = new System.Drawing.Size(90, 64);
-            this.btnBoQua.TabIndex = 3;
-            this.btnBoQua.Text = "Bỏ qua";
-            this.btnBoQua.Click += new System.EventHandler(this.btnBoQua_Click);
+            btnBoQua.Dock = DockStyle.Left;
+            btnBoQua.Location = new Point(380, 0);
+            btnBoQua.Name = "btnBoQua";
+            btnBoQua.Size = new Size(90, 64);
+            btnBoQua.TabIndex = 3;
+            btnBoQua.Text = "Bỏ qua";
+            btnBoQua.Click += btnBoQua_Click;
             // 
             // btnLuu
             // 
-            this.btnLuu.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnLuu.Location = new System.Drawing.Point(290, 0);
-            this.btnLuu.Name = "btnLuu";
-            this.btnLuu.Size = new System.Drawing.Size(90, 64);
-            this.btnLuu.TabIndex = 4;
-            this.btnLuu.Text = "Lưu";
-            this.btnLuu.Click += new System.EventHandler(this.btnLuu_Click);
+            btnLuu.Dock = DockStyle.Left;
+            btnLuu.Location = new Point(290, 0);
+            btnLuu.Name = "btnLuu";
+            btnLuu.Size = new Size(90, 64);
+            btnLuu.TabIndex = 4;
+            btnLuu.Text = "Lưu";
+            btnLuu.Click += btnLuu_Click;
             // 
             // btnSua
             // 
-            this.btnSua.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnSua.Location = new System.Drawing.Point(200, 0);
-            this.btnSua.Name = "btnSua";
-            this.btnSua.Size = new System.Drawing.Size(90, 64);
-            this.btnSua.TabIndex = 5;
-            this.btnSua.Text = "Sửa";
-            this.btnSua.Click += new System.EventHandler(this.btnSua_Click);
+            btnSua.Dock = DockStyle.Left;
+            btnSua.Location = new Point(200, 0);
+            btnSua.Name = "btnSua";
+            btnSua.Size = new Size(90, 64);
+            btnSua.TabIndex = 5;
+            btnSua.Text = "Sửa";
+            btnSua.Click += btnSua_Click;
             // 
             // btnThem
             // 
-            this.btnThem.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnThem.Location = new System.Drawing.Point(110, 0);
-            this.btnThem.Name = "btnThem";
-            this.btnThem.Size = new System.Drawing.Size(90, 64);
-            this.btnThem.TabIndex = 6;
-            this.btnThem.Text = "Thêm";
-            this.btnThem.Click += new System.EventHandler(this.btnThem_Click);
+            btnThem.Dock = DockStyle.Left;
+            btnThem.Location = new Point(110, 0);
+            btnThem.Name = "btnThem";
+            btnThem.Size = new Size(90, 64);
+            btnThem.TabIndex = 6;
+            btnThem.Text = "Thêm";
+            btnThem.Click += btnThem_Click;
             // 
             // btnChiTiet
             // 
-            this.btnChiTiet.Dock = System.Windows.Forms.DockStyle.Left;
-            this.btnChiTiet.Location = new System.Drawing.Point(0, 0);
-            this.btnChiTiet.Name = "btnChiTiet";
-            this.btnChiTiet.Size = new System.Drawing.Size(110, 64);
-            this.btnChiTiet.TabIndex = 7;
-            this.btnChiTiet.Text = "Chi tiết";
-            this.btnChiTiet.Click += new System.EventHandler(this.btnChiTiet_Click);
+            btnChiTiet.Dock = DockStyle.Left;
+            btnChiTiet.Location = new Point(0, 0);
+            btnChiTiet.Name = "btnChiTiet";
+            btnChiTiet.Size = new Size(110, 64);
+            btnChiTiet.TabIndex = 7;
+            btnChiTiet.Text = "Chi tiết";
+            btnChiTiet.Click += btnChiTiet_Click;
             // 
             // pnlForm
             // 
-            this.pnlForm.Controls.Add(this.btnTim);
-            this.pnlForm.Controls.Add(this.txtSearch);
-            this.pnlForm.Controls.Add(this.cboCa);
-            this.pnlForm.Controls.Add(this.txtPhong);
-            this.pnlForm.Controls.Add(this.nudSoLuong);
-            this.pnlForm.Controls.Add(this.cboMaNV);
-            this.pnlForm.Controls.Add(this.cboMaTK);
-            this.pnlForm.Controls.Add(this.dtpNgayDK);
-            this.pnlForm.Controls.Add(this.txtSoPhieu);
-            this.pnlForm.Controls.Add(this.lblSearch);
-            this.pnlForm.Controls.Add(this.lblCa);
-            this.pnlForm.Controls.Add(this.lblPhong);
-            this.pnlForm.Controls.Add(this.lblSL);
-            this.pnlForm.Controls.Add(this.lblNoiSinh);
-            this.pnlForm.Controls.Add(this.lblTen);
-            this.pnlForm.Controls.Add(this.lblNgay);
-            this.pnlForm.Controls.Add(this.lblMa);
-            this.pnlForm.Controls.Add(this.lblTitle);
-            this.pnlForm.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlForm.Location = new System.Drawing.Point(0, 0);
-            this.pnlForm.Name = "pnlForm";
-            this.pnlForm.Padding = new System.Windows.Forms.Padding(8);
-            this.pnlForm.Size = new System.Drawing.Size(1004, 220);
-            this.pnlForm.TabIndex = 3;
+            pnlForm.Controls.Add(btnTim);
+            pnlForm.Controls.Add(txtSearch);
+            pnlForm.Controls.Add(cboCa);
+            pnlForm.Controls.Add(cboPhong);
+            pnlForm.Controls.Add(nudSoLuong);
+            pnlForm.Controls.Add(cboMaNV);
+            pnlForm.Controls.Add(cboMaTK);
+            pnlForm.Controls.Add(dtpNgayDK);
+            pnlForm.Controls.Add(txtSoPhieu);
+            pnlForm.Controls.Add(lblSearch);
+            pnlForm.Controls.Add(lblCa);
+            pnlForm.Controls.Add(lblPhong);
+            pnlForm.Controls.Add(lblSL);
+            pnlForm.Controls.Add(lblNoiSinh);
+            pnlForm.Controls.Add(lblTen);
+            pnlForm.Controls.Add(lblNgay);
+            pnlForm.Controls.Add(lblMa);
+            pnlForm.Controls.Add(lblTitle);
+            pnlForm.Dock = DockStyle.Top;
+            pnlForm.Location = new Point(0, 0);
+            pnlForm.Name = "pnlForm";
+            pnlForm.Padding = new Padding(8);
+            pnlForm.Size = new Size(1004, 220);
+            pnlForm.TabIndex = 3;
             // 
             // btnTim
             // 
-            this.btnTim.Location = new System.Drawing.Point(546, 177);
-            this.btnTim.Name = "btnTim";
-            this.btnTim.Size = new System.Drawing.Size(70, 39);
-            this.btnTim.TabIndex = 0;
-            this.btnTim.Text = "Tìm";
-            this.btnTim.Click += new System.EventHandler(this.btnTim_Click);
+            btnTim.Location = new Point(546, 177);
+            btnTim.Name = "btnTim";
+            btnTim.Size = new Size(70, 39);
+            btnTim.TabIndex = 0;
+            btnTim.Text = "Tìm";
+            btnTim.Click += btnTim_Click;
             // 
             // txtSearch
             // 
-            this.txtSearch.Location = new System.Drawing.Point(120, 182);
-            this.txtSearch.Name = "txtSearch";
-            this.txtSearch.Size = new System.Drawing.Size(420, 31);
-            this.txtSearch.TabIndex = 1;
+            txtSearch.Location = new Point(120, 182);
+            txtSearch.Name = "txtSearch";
+            txtSearch.Size = new Size(420, 31);
+            txtSearch.TabIndex = 1;
             // 
             // cboCa
             // 
-            this.cboCa.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboCa.Location = new System.Drawing.Point(822, 94);
-            this.cboCa.Name = "cboCa";
-            this.cboCa.Size = new System.Drawing.Size(120, 33);
-            this.cboCa.TabIndex = 2;
+            cboCa.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboCa.Location = new Point(822, 94);
+            cboCa.Name = "cboCa";
+            cboCa.Size = new Size(120, 33);
+            cboCa.TabIndex = 2;
             // 
             // txtPhong
             // 
-            this.txtPhong.Location = new System.Drawing.Point(581, 133);
-            this.txtPhong.Name = "txtPhong";
-            this.txtPhong.Size = new System.Drawing.Size(270, 31);
-            this.txtPhong.TabIndex = 3;
+            this.cboPhong.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cboPhong.Location = new System.Drawing.Point(581, 133); // Tọa độ chuẩn
+            this.cboPhong.Name = "cboPhong";
+            this.cboPhong.Size = new System.Drawing.Size(270, 31);
             // 
             // nudSoLuong
             // 
-            this.nudSoLuong.Location = new System.Drawing.Point(620, 94);
-            this.nudSoLuong.Maximum = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
-            this.nudSoLuong.Name = "nudSoLuong";
-            this.nudSoLuong.Size = new System.Drawing.Size(120, 31);
-            this.nudSoLuong.TabIndex = 4;
+            nudSoLuong.Location = new Point(620, 94);
+            nudSoLuong.Maximum = new decimal(new int[] { 100000, 0, 0, 0 });
+            nudSoLuong.Name = "nudSoLuong";
+            nudSoLuong.Size = new Size(120, 31);
+            nudSoLuong.TabIndex = 4;
             // 
             // cboMaNV
             // 
-            this.cboMaNV.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboMaNV.Location = new System.Drawing.Point(120, 131);
-            this.cboMaNV.Name = "cboMaNV";
-            this.cboMaNV.Size = new System.Drawing.Size(320, 33);
-            this.cboMaNV.TabIndex = 5;
+            cboMaNV.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboMaNV.Location = new Point(120, 131);
+            cboMaNV.Name = "cboMaNV";
+            cboMaNV.Size = new Size(320, 33);
+            cboMaNV.TabIndex = 5;
             // 
             // cboMaTK
             // 
-            this.cboMaTK.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cboMaTK.Location = new System.Drawing.Point(120, 90);
-            this.cboMaTK.Name = "cboMaTK";
-            this.cboMaTK.Size = new System.Drawing.Size(320, 33);
-            this.cboMaTK.TabIndex = 6;
+            cboMaTK.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboMaTK.Location = new Point(120, 90);
+            cboMaTK.Name = "cboMaTK";
+            cboMaTK.Size = new Size(320, 33);
+            cboMaTK.TabIndex = 6;
             // 
             // dtpNgayDK
             // 
-            this.dtpNgayDK.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dtpNgayDK.Location = new System.Drawing.Point(440, 56);
-            this.dtpNgayDK.Name = "dtpNgayDK";
-            this.dtpNgayDK.Size = new System.Drawing.Size(160, 31);
-            this.dtpNgayDK.TabIndex = 7;
+            dtpNgayDK.Format = DateTimePickerFormat.Short;
+            dtpNgayDK.Location = new Point(440, 56);
+            dtpNgayDK.Name = "dtpNgayDK";
+            dtpNgayDK.Size = new Size(160, 31);
+            dtpNgayDK.TabIndex = 7;
             // 
             // txtSoPhieu
             // 
-            this.txtSoPhieu.Location = new System.Drawing.Point(120, 56);
-            this.txtSoPhieu.Name = "txtSoPhieu";
-            this.txtSoPhieu.Size = new System.Drawing.Size(114, 31);
-            this.txtSoPhieu.TabIndex = 8;
+            txtSoPhieu.Location = new Point(120, 56);
+            txtSoPhieu.Name = "txtSoPhieu";
+            txtSoPhieu.Size = new Size(114, 31);
+            txtSoPhieu.TabIndex = 8;
             // 
             // lblSearch
             // 
-            this.lblSearch.Location = new System.Drawing.Point(12, 184);
-            this.lblSearch.Name = "lblSearch";
-            this.lblSearch.Size = new System.Drawing.Size(100, 24);
-            this.lblSearch.TabIndex = 9;
-            this.lblSearch.Text = "Tìm kiếm:";
+            lblSearch.Location = new Point(12, 184);
+            lblSearch.Name = "lblSearch";
+            lblSearch.Size = new Size(100, 24);
+            lblSearch.TabIndex = 9;
+            lblSearch.Text = "Tìm kiếm:";
             // 
             // lblCa
             // 
-            this.lblCa.Location = new System.Drawing.Point(782, 96);
-            this.lblCa.Name = "lblCa";
-            this.lblCa.Size = new System.Drawing.Size(40, 24);
-            this.lblCa.TabIndex = 10;
-            this.lblCa.Text = "Ca:";
+            lblCa.Location = new Point(782, 96);
+            lblCa.Name = "lblCa";
+            lblCa.Size = new Size(40, 24);
+            lblCa.TabIndex = 10;
+            lblCa.Text = "Ca:";
             // 
             // lblPhong
             // 
-            this.lblPhong.Location = new System.Drawing.Point(511, 135);
-            this.lblPhong.Name = "lblPhong";
-            this.lblPhong.Size = new System.Drawing.Size(70, 24);
-            this.lblPhong.TabIndex = 11;
-            this.lblPhong.Text = "Phòng:";
+            lblPhong.Location = new Point(511, 135);
+            lblPhong.Name = "lblPhong";
+            lblPhong.Size = new Size(70, 24);
+            lblPhong.TabIndex = 11;
+            lblPhong.Text = "Phòng:";
             // 
             // lblSL
             // 
-            this.lblSL.Location = new System.Drawing.Point(512, 96);
-            this.lblSL.Name = "lblSL";
-            this.lblSL.Size = new System.Drawing.Size(100, 24);
-            this.lblSL.TabIndex = 12;
-            this.lblSL.Text = "Số lượng:";
+            lblSL.Location = new Point(512, 96);
+            lblSL.Name = "lblSL";
+            lblSL.Size = new Size(100, 24);
+            lblSL.TabIndex = 12;
+            lblSL.Text = "Số lượng:";
             // 
             // lblNoiSinh
             // 
-            this.lblNoiSinh.Location = new System.Drawing.Point(12, 133);
-            this.lblNoiSinh.Name = "lblNoiSinh";
-            this.lblNoiSinh.Size = new System.Drawing.Size(100, 24);
-            this.lblNoiSinh.TabIndex = 13;
-            this.lblNoiSinh.Text = "Nhân viên:";
+            lblNoiSinh.Location = new Point(12, 133);
+            lblNoiSinh.Name = "lblNoiSinh";
+            lblNoiSinh.Size = new Size(100, 24);
+            lblNoiSinh.TabIndex = 13;
+            lblNoiSinh.Text = "Nhân viên:";
             // 
             // lblTen
             // 
-            this.lblTen.Location = new System.Drawing.Point(12, 92);
-            this.lblTen.Name = "lblTen";
-            this.lblTen.Size = new System.Drawing.Size(100, 24);
-            this.lblTen.TabIndex = 14;
-            this.lblTen.Text = "Thực khách:";
+            lblTen.Location = new Point(12, 92);
+            lblTen.Name = "lblTen";
+            lblTen.Size = new Size(100, 24);
+            lblTen.TabIndex = 14;
+            lblTen.Text = "Thực khách:";
             // 
             // lblNgay
             // 
-            this.lblNgay.Location = new System.Drawing.Point(340, 58);
-            this.lblNgay.Name = "lblNgay";
-            this.lblNgay.Size = new System.Drawing.Size(100, 24);
-            this.lblNgay.TabIndex = 15;
-            this.lblNgay.Text = "Ngày ĐK:";
+            lblNgay.Location = new Point(340, 58);
+            lblNgay.Name = "lblNgay";
+            lblNgay.Size = new Size(100, 24);
+            lblNgay.TabIndex = 15;
+            lblNgay.Text = "Ngày ĐK:";
             // 
             // lblMa
             // 
-            this.lblMa.Location = new System.Drawing.Point(12, 58);
-            this.lblMa.Name = "lblMa";
-            this.lblMa.Size = new System.Drawing.Size(100, 24);
-            this.lblMa.TabIndex = 16;
-            this.lblMa.Text = "Số phiếu:";
+            lblMa.Location = new Point(12, 58);
+            lblMa.Name = "lblMa";
+            lblMa.Size = new Size(100, 24);
+            lblMa.TabIndex = 16;
+            lblMa.Text = "Số phiếu:";
             // 
             // lblTitle
             // 
-            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold);
-            this.lblTitle.Location = new System.Drawing.Point(8, 8);
-            this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(600, 40);
-            this.lblTitle.TabIndex = 17;
-            this.lblTitle.Text = "QUẢN LÝ ĐẶT TIỆC";
+            lblTitle.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
+            lblTitle.Location = new Point(8, 8);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(600, 40);
+            lblTitle.TabIndex = 17;
+            lblTitle.Text = "QUẢN LÝ ĐẶT TIỆC";
             // 
             // FormDatTiec
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1286, 719);
-            this.Controls.Add(this.splitMain);
-            this.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.MinimumSize = new System.Drawing.Size(900, 600);
-            this.Name = "FormDatTiec";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Đặt tiệc";
-            this.Load += new System.EventHandler(this.FormDatTiec_Load);
-            this.splitMain.Panel1.ResumeLayout(false);
-            this.splitMain.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitMain)).EndInit();
-            this.splitMain.ResumeLayout(false);
-            this.pnlRight.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dgv)).EndInit();
-            this.pnlButtons.ResumeLayout(false);
-            this.pnlForm.ResumeLayout(false);
-            this.pnlForm.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.nudSoLuong)).EndInit();
-            this.ResumeLayout(false);
+            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1286, 719);
+            Controls.Add(splitMain);
+            Font = new Font("Segoe UI", 9F);
+            MinimumSize = new Size(900, 600);
+            Name = "FormDatTiec";
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Đặt tiệc";
+            Load += FormDatTiec_Load;
+            splitMain.Panel1.ResumeLayout(false);
+            splitMain.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitMain).EndInit();
+            splitMain.ResumeLayout(false);
+            pnlRight.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dgv).EndInit();
+            pnlButtons.ResumeLayout(false);
+            pnlForm.ResumeLayout(false);
+            pnlForm.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudSoLuong).EndInit();
+            ResumeLayout(false);
 
         }
 
@@ -434,7 +431,7 @@ namespace GUI_QLNH
         private System.Windows.Forms.ComboBox cboMaTK;
         private System.Windows.Forms.ComboBox cboMaNV;
         private System.Windows.Forms.NumericUpDown nudSoLuong;
-        private System.Windows.Forms.TextBox txtPhong;
+        private System.Windows.Forms.ComboBox cboPhong;
         private System.Windows.Forms.ComboBox cboCa;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnTim;

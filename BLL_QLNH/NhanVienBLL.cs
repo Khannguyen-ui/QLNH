@@ -57,12 +57,51 @@ namespace BLL_QLNH
             return Delete(maNV, out err);
         }
 
+        // Trong BLL_QLNH/NhanVienBLL.cs
+
         public static bool Delete(string maNV, out string error)
         {
             error = null;
-            if (string.IsNullOrWhiteSpace(maNV)) { error = "Thiếu mã nhân viên."; return false; }
-            try { return NhanVienDAL.Delete(maNV); }
-            catch (Exception ex) { error = ex.Message; return false; }
+
+            // 1. Kiểm tra Rỗng/Null (TC_DEL_01, TC_DEL_02)
+            if (string.IsNullOrWhiteSpace(maNV))
+            {
+                error = "Thiếu mã nhân viên.";
+                return false;
+            }
+
+            // 2. [CẬP NHẬT] ĐƯA LÊN TRƯỚC: Chặn xóa Admin (TC_DEL_05)
+            // Phải chặn ngay từ khóa "admin" trước khi kiểm tra trong DB
+            if (maNV.Trim().Equals("admin", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "Không thể xóa tài khoản Admin hệ thống.";
+                return false;
+            }
+
+            // 3. Kiểm tra tồn tại (TC_DEL_04)
+            // Chỉ kiểm tra tồn tại nếu mã đó KHÔNG PHẢI là admin
+            var exists = GetByMaNV(maNV);
+            if (exists == null)
+            {
+                error = "Nhân viên không tồn tại.";
+                return false;
+            }
+
+            // 4. Gọi DAL xóa (TC_DEL_03 và TC_DEL_06)
+            try
+            {
+                bool deleted = NhanVienDAL.Delete(maNV);
+
+                // Kiểm tra lại lần nữa cho chắc (trường hợp Delete trả về true nhưng rows=0)
+                // Tuy nhiên với logic DAL trên thì deleted luôn là true trừ khi Exception
+                return deleted;
+            }
+            catch (Exception ex)
+            {
+                // Bắt lỗi từ DAL ném lên (bao gồm lỗi khóa ngoại 547)
+                error = ex.Message;
+                return false;
+            }
         }
 
         /// <summary>

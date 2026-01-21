@@ -56,10 +56,13 @@ ORDER BY td.TenMon;";
 
         // ================== DANH SÁCH CHỜ THANH TOÁN ==================
         // Lấy từ DatTiec để cả các phiếu CHO_TT chưa có bản ghi HoaDon cũng xuất hiện
-        public DataTable ListChoThanhToan(string keyword, DateTime? from, DateTime? to)
+        // Trong file HoaDonDAL.cs
+        public DataTable ListChoThanhToan(string keyword, DateTime? from, DateTime? to, string maNV)
         {
             using (var cn = new SqlConnection(CONN))
-            using (var da = new SqlDataAdapter(@"
+            {
+                // Thêm điều kiện lọc d.MaNV = @maNV vào câu lệnh SQL
+                string sql = @"
 SELECT 
     hd.MaHD,
     d.SoPhieu,
@@ -70,13 +73,13 @@ SELECT
     hd.TongCuoi,
     hd.NVTT,
     hd.MaNV,
-    hd.TrangThai     AS TrangThaiHoaDon,
+    hd.TrangThai      AS TrangThaiHoaDon,
     d.NgayDK,
     d.Phong,
     d.Ca,
-    d.TrangThai      AS TrangThaiPhieu,
+    d.TrangThai       AS TrangThaiPhieu,
     tk.TenTK,
-    nv.TENNV         AS NhanVienLap
+    nv.TENNV          AS NhanVienLap
 FROM DatTiec d
 LEFT JOIN HoaDon    hd ON hd.SoPhieu = d.SoPhieu
 LEFT JOIN ThucKhach tk ON tk.MaTK    = d.MaTK
@@ -87,22 +90,26 @@ WHERE (
         OR ISNULL(hd.SoPhieu,N'') LIKE N'%'+@q+N'%'
         OR ISNULL(hd.MaHD,N'')    LIKE N'%'+@q+N'%'
         OR ISNULL(tk.TenTK,N'')   LIKE N'%'+@q+N'%'
-        OR ISNULL(hd.NVTT,N'')    LIKE N'%'+@q+N'%'
       )
-  -- Lọc ngày chỉ áp cho những dòng có NgayTT; nếu NULL vẫn giữ (phiếu chưa lập hóa đơn)
+  -- ĐIỀU KIỆN QUAN TRỌNG: Chỉ lấy phiếu do nhân viên này phụ trách
+  AND (@maNV = '' OR d.MaNV = @maNV) 
   AND (@from IS NULL OR hd.NgayTT IS NULL OR CONVERT(date, hd.NgayTT) >= @from)
   AND (@to   IS NULL OR hd.NgayTT IS NULL OR CONVERT(date, hd.NgayTT) < DATEADD(day,1,@to))
 ORDER BY 
   CAST(COALESCE(hd.NgayTT, d.NgayDK, '1900-01-01') AS datetime) DESC,
-  ISNULL(hd.MaHD, N'') DESC;", cn))
-            {
-                da.SelectCommand.Parameters.AddWithValue("@q", (keyword ?? "").Trim());
-                da.SelectCommand.Parameters.AddWithValue("@from", (object)from ?? DBNull.Value);
-                da.SelectCommand.Parameters.AddWithValue("@to", (object)to ?? DBNull.Value);
+  ISNULL(hd.MaHD, N'') DESC;";
 
-                var tb = new DataTable();
-                da.Fill(tb);
-                return tb;
+                using (var da = new SqlDataAdapter(sql, cn))
+                {
+                    da.SelectCommand.Parameters.AddWithValue("@q", (keyword ?? "").Trim());
+                    da.SelectCommand.Parameters.AddWithValue("@from", (object)from ?? DBNull.Value);
+                    da.SelectCommand.Parameters.AddWithValue("@to", (object)to ?? DBNull.Value);
+                    da.SelectCommand.Parameters.AddWithValue("@maNV", maNV ?? ""); // Thêm parameter maNV
+
+                    var tb = new DataTable();
+                    da.Fill(tb);
+                    return tb;
+                }
             }
         }
 

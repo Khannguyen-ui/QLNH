@@ -79,8 +79,10 @@ namespace DAL_QLNH
                 cmd.Parameters.AddWithValue("@soluongton", td.SoLuongTon);
 
                 con.Open();
-                object x = cmd.ExecuteScalar(); // SELECT @@ROWCOUNT AS Affected
-                return x != null && Convert.ToInt32(x) > 0;
+                //object x = cmd.ExecuteScalar(); // SELECT @@ROWCOUNT AS Affected
+                int rowsAffected = cmd.ExecuteNonQuery();
+                //return x != null && Convert.ToInt32(x) > 0;
+                return rowsAffected > 0;
             }
         }
 
@@ -115,8 +117,19 @@ namespace DAL_QLNH
                 cmd.Parameters.AddWithValue("@matd", maTD ?? string.Empty);
 
                 con.Open();
-                object x = cmd.ExecuteScalar();
-                return x != null && Convert.ToInt32(x) > 0;
+                try
+                {
+                    // Sử dụng ExecuteScalar nếu SP của bạn kết thúc bằng SELECT @@ROWCOUNT
+                    object x = cmd.ExecuteScalar();
+                    return x != null && Convert.ToInt32(x) > 0;
+                }
+                catch (SqlException ex)
+                {
+                    // Nếu lỗi 547 là lỗi vi phạm khóa ngoại (món ăn đã có hóa đơn)
+                    if (ex.Number == 547)
+                        throw new Exception("Món ăn này đã có trong hóa đơn, không thể xóa để đảm bảo lịch sử dữ liệu.");
+                    throw ex;
+                }
             }
         }
 
@@ -147,6 +160,38 @@ namespace DAL_QLNH
                 int affected = cmd.ExecuteNonQuery();
                 return affected > 0;
             }
+        }
+        // Thêm hàm này vào trong class ThucDonDAL
+        public static List<string> GetListDVT()
+        {
+            List<string> list = new List<string>();
+            try
+            {
+                using (var con = Conn()) // Sử dụng hàm Conn() có sẵn của bạn
+                {
+                    using (var cmd = new SqlCommand("dbo.sp_DonViTinh_GetAll", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        con.Open();
+                        using (var rd = cmd.ExecuteReader())
+                        {
+                            while (rd.Read())
+                            {
+                                if (rd["TenDVT"] != DBNull.Value)
+                                {
+                                    list.Add(rd["TenDVT"].ToString());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Nếu lỗi DB, trả về danh sách mặc định để ứng dụng không crash
+                return new List<string> { "Ly", "Đĩa", "Phần", "Lon" };
+            }
+            return list;
         }
     }
 }

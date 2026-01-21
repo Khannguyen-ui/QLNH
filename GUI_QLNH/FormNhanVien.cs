@@ -122,14 +122,20 @@ namespace GUI_QLNH
             dgvNhanVien.ReadOnly = false;
             dgvNhanVien.AllowUserToAddRows = false;
             dgvNhanVien.AllowUserToDeleteRows = false;
+            // Chế độ này giúp nhận diện thay đổi ngay khi nhấn
             dgvNhanVien.EditMode = DataGridViewEditMode.EditOnEnter;
             dgvNhanVien.RowHeadersVisible = false;
 
-            // Cho phép người dùng chỉnh độ rộng cột mà không kéo theo form
             dgvNhanVien.AllowUserToResizeColumns = true;
             dgvNhanVien.AllowUserToResizeRows = false;
 
-            // dgvNhanVien.CellClick += dgvNhanVien_CellClick;
+            // --- THÊM DÒNG NÀY ĐỂ CHECKBOX NHẠY HƠN ---
+            dgvNhanVien.CurrentCellDirtyStateChanged += (s, e) => {
+                if (dgvNhanVien.IsCurrentCellDirty && dgvNhanVien.CurrentCell is DataGridViewCheckBoxCell)
+                {
+                    dgvNhanVien.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
         }
 
         private void LoadData()
@@ -168,6 +174,7 @@ namespace GUI_QLNH
         // Thêm cột tick chọn nếu chưa có
         private void EnsureSelectColumn()
         {
+            // 1. Tạo cột Checkbox nếu chưa tồn tại
             if (!dgvNhanVien.Columns.Contains(SelectColName))
             {
                 var chk = new DataGridViewCheckBoxColumn
@@ -175,15 +182,26 @@ namespace GUI_QLNH
                     Name = SelectColName,
                     HeaderText = "Chọn",
                     Width = 55,
-                    ReadOnly = false
+                    ReadOnly = false, // Phải để false để người dùng có thể tích chọn
+                    Visible = true,
+                    TrueValue = true,  // Định nghĩa giá trị khi tích
+                    FalseValue = false // Định nghĩa giá trị khi bỏ tích
                 };
                 dgvNhanVien.Columns.Insert(0, chk);
             }
-            foreach (DataGridViewColumn col in dgvNhanVien.Columns)
-                col.ReadOnly = col.Name != SelectColName;
 
+            // 2. Thiết lập ReadOnly: Chỉ cột "Chọn" là cho phép sửa, các cột khác khóa lại
+            foreach (DataGridViewColumn col in dgvNhanVien.Columns)
+            {
+                col.ReadOnly = (col.Name != SelectColName);
+            }
+
+            // 3. Khởi tạo giá trị mặc định là false cho tất cả các hàng
             foreach (DataGridViewRow r in dgvNhanVien.Rows)
-                r.Cells[SelectColName].Value = false;
+            {
+                if (r.Cells[SelectColName].Value == null)
+                    r.Cells[SelectColName].Value = false;
+            }
         }
 
         // ================= FORM HELPERS =================
@@ -252,47 +270,121 @@ namespace GUI_QLNH
             try
             {
                 var nv = ReadForm();
+                // Trim để xóa khoảng trắng thừa đầu đuôi
                 nv.MaNV = (nv.MaNV ?? "").Trim();
                 nv.TenNV = (nv.TenNV ?? "").Trim();
+                nv.NoiSinh = (nv.NoiSinh ?? "").Trim();
+                nv.MatKhau = (nv.MatKhau ?? "").Trim();
 
-                if (string.IsNullOrWhiteSpace(nv.MaNV) || string.IsNullOrWhiteSpace(nv.TenNV))
+                // ==========================================================
+                // 1. KIỂM TRA MÃ NHÂN VIÊN
+                // ==========================================================
+                if (string.IsNullOrWhiteSpace(nv.MaNV))
                 {
-                    MessageBox.Show("Mã và Tên nhân viên không được để trống!");
+                    MessageBox.Show("Vui lòng nhập Mã nhân viên.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtMaNV.Focus();
                     return;
                 }
 
-                // basic validation: max lengths (adjust if your DB limits differ)
-                if (nv.MaNV.Length > 20) { MessageBox.Show("Mã NV quá dài."); return; }
-                if (nv.TenNV.Length > 100) { MessageBox.Show("Tên NV quá dài."); return; }
+                // Kiểm tra ký tự đầu tiên phải là CHỮ
+                if (!char.IsLetter(nv.MaNV[0]))
+                {
+                    MessageBox.Show("Mã nhân viên phải BẮT ĐẦU bằng chữ cái (Ví dụ: NV01).", "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtMaNV.Focus();
+                    txtMaNV.SelectAll();
+                    return;
+                }
 
-                // check existence
+                // [MỚI] Kiểm tra không chứa ký tự đặc biệt (Chỉ cho phép Chữ và Số)
+                // Nếu có ký tự nào KHÔNG phải chữ và KHÔNG phải số -> Báo lỗi
+                if (nv.MaNV.Any(c => !char.IsLetterOrDigit(c)))
+                {
+                    MessageBox.Show("Mã nhân viên không được chứa ký tự đặc biệt hoặc khoảng trắng!\n(Chỉ chấp nhận chữ và số)",
+                                    "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtMaNV.Focus();
+                    txtMaNV.SelectAll();
+                    return;
+                }
+
+                // Kiểm tra độ dài Mã NV (> 20 ký tự)
+                if (nv.MaNV.Length > 20)
+                {
+                    MessageBox.Show("Mã nhân viên không được vượt quá 20 ký tự!", "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtMaNV.Focus();
+                    return;
+                }
+
+                // ==========================================================
+                // 2. KIỂM TRA TÊN NHÂN VIÊN
+                // ==========================================================
+                if (string.IsNullOrWhiteSpace(nv.TenNV))
+                {
+                    MessageBox.Show("Vui lòng nhập Tên nhân viên.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenNV.Focus();
+                    return;
+                }
+
+                if (nv.TenNV.Length > 100)
+                {
+                    MessageBox.Show("Tên nhân viên không được vượt quá 100 ký tự!", "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenNV.Focus();
+                    return;
+                }
+
+                // Kiểm tra Ký tự đặc biệt & Số trong Tên
+                if (nv.TenNV.Any(c => !char.IsLetter(c) && !char.IsWhiteSpace(c)))
+                {
+                    MessageBox.Show("Tên nhân viên không được chứa số hoặc ký tự đặc biệt!", "Lỗi định dạng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtTenNV.Focus();
+                    txtTenNV.SelectAll();
+                    return;
+                }
+
+                // ==========================================================
+                // 3. KIỂM TRA CÁC TRƯỜNG KHÁC
+                // ==========================================================
+                if (string.IsNullOrWhiteSpace(nv.NoiSinh))
+                {
+                    MessageBox.Show("Vui lòng nhập Nơi sinh.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtNoiSinh.Focus();
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(nv.MatKhau))
+                {
+                    MessageBox.Show("Vui lòng nhập Mật khẩu.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtMatKhau.Focus();
+                    return;
+                }
+
+                // ==========================================================
+                // 4. XỬ LÝ LƯU DATABASE
+                // ==========================================================
                 var list = NhanVienBLL.GetAll();
                 var existed = list.Find(x => string.Equals(x.MaNV, nv.MaNV, StringComparison.OrdinalIgnoreCase));
-
                 string err = null;
+
+                // --- TRƯỜNG HỢP THÊM MỚI ---
                 if (_mode == FormMode.Adding)
                 {
                     if (existed != null)
                     {
-                        MessageBox.Show($"Mã nhân viên '{nv.MaNV}' đã tồn tại. Vui lòng chọn mã khác.", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show($"Mã nhân viên '{nv.MaNV}' đã tồn tại. Vui lòng chọn mã khác.", "Trùng mã", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        txtMaNV.Focus();
+                        txtMaNV.SelectAll();
                         return;
                     }
 
                     var ok = NhanVienBLL.Insert(nv, out err);
                     if (ok)
                     {
-                        MessageBox.Show("Thêm thành công!");
+                        MessageBox.Show("Thêm nhân viên thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                         SelectRowByMa(nv.MaNV);
+
                         var stored = NhanVienBLL.GetByMaNV(nv.MaNV);
-                        if (stored != null)
-                        {
-                            txtMaNV.Text = stored.MaNV;
-                            txtTenNV.Text = stored.TenNV;
-                            txtNoiSinh.Text = stored.NoiSinh;
-                            dtpNgayLamViec.Value = stored.NgayLamViec == DateTime.MinValue ? DateTime.Today : stored.NgayLamViec;
-                            if (!string.IsNullOrEmpty(stored.MatKhau)) txtMatKhau.Text = stored.MatKhau;
-                        }
+                        if (stored != null) FillFormFromObject(stored);
+
                         SetMode(FormMode.Idle);
                     }
                     else
@@ -300,6 +392,7 @@ namespace GUI_QLNH
                         MessageBox.Show("Thêm thất bại: " + (err ?? "Không rõ nguyên nhân"), "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
+                // --- TRƯỜNG HỢP SỬA ---
                 else if (_mode == FormMode.Editing)
                 {
                     if (existed == null)
@@ -311,18 +404,13 @@ namespace GUI_QLNH
                     var ok = NhanVienBLL.Update(nv, out err);
                     if (ok)
                     {
-                        MessageBox.Show("Cập nhật thành công!");
+                        MessageBox.Show("Cập nhật thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                         SelectRowByMa(nv.MaNV);
+
                         var stored = NhanVienBLL.GetByMaNV(nv.MaNV);
-                        if (stored != null)
-                        {
-                            txtMaNV.Text = stored.MaNV;
-                            txtTenNV.Text = stored.TenNV;
-                            txtNoiSinh.Text = stored.NoiSinh;
-                            dtpNgayLamViec.Value = stored.NgayLamViec == DateTime.MinValue ? DateTime.Today : stored.NgayLamViec;
-                            if (!string.IsNullOrEmpty(stored.MatKhau)) txtMatKhau.Text = stored.MatKhau;
-                        }
+                        if (stored != null) FillFormFromObject(stored);
+
                         SetMode(FormMode.Idle);
                     }
                     else
@@ -330,24 +418,36 @@ namespace GUI_QLNH
                         MessageBox.Show("Cập nhật thất bại: " + (err ?? "Không rõ nguyên nhân"), "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                else
-                {
-                    MessageBox.Show("Không ở chế độ Thêm hoặc Sửa.");
-                }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi hệ thống: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+
+        // Helper nhỏ để fill form từ object (cho gọn code trên)
+        private void FillFormFromObject(NhanVien stored)
+        {
+            txtMaNV.Text = stored.MaNV;
+            txtTenNV.Text = stored.TenNV;
+            txtNoiSinh.Text = stored.NoiSinh;
+            dtpNgayLamViec.Value = stored.NgayLamViec == DateTime.MinValue ? DateTime.Today : stored.NgayLamViec;
+            if (!string.IsNullOrEmpty(stored.MatKhau)) txtMatKhau.Text = stored.MatKhau;
         }
 
         private void btnXoa_Click(object sender, EventArgs e)
         {
             try
             {
-                dgvNhanVien.EndEdit();
+                dgvNhanVien.EndEdit(); // Kết thúc chỉnh sửa trên lưới để lấy giá trị Checkbox mới nhất
 
+                // 1. LẤY DANH SÁCH MÃ CẦN XÓA (TỪ CHECKBOX)
                 var ids = new List<string>();
                 foreach (DataGridViewRow r in dgvNhanVien.Rows)
                 {
                     if (r.IsNewRow) continue;
+                    // Kiểm tra cột Checkbox (SelectColName = "Chon")
                     if (r.Cells[SelectColName].Value is bool b && b)
                     {
                         var id = Convert.ToString(r.Cells["MaNV"].Value);
@@ -355,37 +455,87 @@ namespace GUI_QLNH
                     }
                 }
 
+                // 2. XỬ LÝ XÓA NHIỀU DÒNG (BATCH DELETE)
                 if (ids.Count > 0)
                 {
-                    if (MessageBox.Show($"Xóa {ids.Count} nhân viên đã chọn?", "Xác nhận",
+                    if (MessageBox.Show($"Bạn có chắc chắn muốn xóa {ids.Count} nhân viên đã chọn?", "Xác nhận xóa",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
 
-                    int ok = 0, fail = 0;
+                    int ok = 0;
+                    List<string> errors = new List<string>(); // Danh sách chứa thông báo lỗi chi tiết
+
                     foreach (var id in ids)
                     {
+                        // [UX] Chặn nhanh việc xóa chính mình trên giao diện (Optional)
+                        // (Dù BLL sẽ chặn, nhưng chặn ở đây đỡ gọi xuống DB)
+                        // Giả sử bạn có lưu User hiện tại trong AppSession
+                        /*
+                        if (id == AppSession.CurrentMaNV) 
+                        {
+                            errors.Add($"- {id}: Không thể xóa tài khoản đang đăng nhập.");
+                            continue; 
+                        }
+                        */
+
                         string err;
-                        if (NhanVienBLL.Delete(id, out err)) ok++; else fail++;
+                        if (NhanVienBLL.Delete(id, out err))
+                        {
+                            ok++;
+                        }
+                        else
+                        {
+                            // Ghi lại lý do lỗi cụ thể cho từng mã
+                            errors.Add($"- {id}: {err ?? "Lỗi không xác định"}");
+                        }
                     }
 
-                    LoadData(); ResetForm();
-                    MessageBox.Show($"Đã xóa: {ok} | Lỗi: {fail}");
+                    // Reload lại lưới sau khi xóa xong
+                    LoadData();
+                    ResetForm();
+
+                    // Hiển thị kết quả
+                    if (errors.Count == 0)
+                    {
+                        MessageBox.Show($"Đã xóa thành công {ok} nhân viên.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // Thông báo vừa có thành công vừa có thất bại
+                        string msg = $"Đã xóa: {ok}\nThất bại: {errors.Count}\n\nChi tiết lỗi:\n" + string.Join("\n", errors);
+                        MessageBox.Show(msg, "Kết quả xóa", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 }
+                // 3. XỬ LÝ XÓA 1 DÒNG (SINGLE DELETE)
                 else
                 {
                     var id = txtMaNV.Text.Trim();
                     if (string.IsNullOrEmpty(id))
-                    { MessageBox.Show("Chọn dòng để xóa hoặc tick trong lưới!"); return; }
+                    {
+                        MessageBox.Show("Vui lòng chọn dòng cần xóa trên lưới hoặc tích vào ô chọn!", "Chưa chọn dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
 
-                    if (MessageBox.Show("Xóa nhân viên này?", "Xác nhận",
+                    if (MessageBox.Show($"Bạn có chắc chắn muốn xóa nhân viên [{id}]?", "Xác nhận xóa",
                         MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
 
                     string err;
                     if (NhanVienBLL.Delete(id, out err))
-                    { MessageBox.Show("Đã xóa!"); LoadData(); ResetForm(); }
-                    else MessageBox.Show("Không thể xóa!\n" + (err ?? "Không rõ nguyên nhân"));
+                    {
+                        MessageBox.Show("Xóa thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        ResetForm();
+                    }
+                    else
+                    {
+                        // Hiển thị thông báo lỗi chi tiết từ BLL trả về (Admin, FK, Không tồn tại...)
+                        MessageBox.Show("Không thể xóa nhân viên này!\n\nLý do: " + (err ?? "Lỗi hệ thống"), "Lỗi xóa", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
-            catch (Exception ex) { MessageBox.Show(ex.Message, "Lỗi"); }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi không mong muốn: " + ex.Message, "Lỗi Hệ Thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnMoi_Click(object sender, EventArgs e) { ResetForm(); LoadData(); }
@@ -410,19 +560,28 @@ namespace GUI_QLNH
         // ================= EVENTS =================
         private void dgvNhanVien_CellClick(object sender, DataGridViewCellEventArgs e)
         {
+            // Chặn click vào header
             if (e.RowIndex < 0) return;
 
+            // 1. Nếu nhấn vào đúng cột "Chọn" (Checkbox)
             if (dgvNhanVien.Columns[e.ColumnIndex].Name == SelectColName)
-            { // only toggle checkbox – do not fill form
-                dgvNhanVien.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            {
+                // Ép kết thúc chỉnh sửa để giá trị True/False cập nhật vào DataSource ngay
+                dgvNhanVien.EndEdit();
+
+                // Trả về luôn, KHÔNG chạy lệnh FillFormFromRow ở dưới 
+                // để tránh việc đang tick chọn mà dữ liệu cứ nhảy lên Form
                 return;
             }
 
+            // 2. Nếu nhấn vào các cột khác (Mã, Tên, Nơi sinh...)
             var r = dgvNhanVien.Rows[e.RowIndex];
-            if (r.Cells["MaNV"].Value == null) return;
+            if (r.Cells["MaNV"].Value == null || r.Cells["MaNV"].Value == DBNull.Value) return;
 
+            // Đổ dữ liệu lên các TextBox để xem hoặc sửa
             FillFormFromRow(r);
-            // Keep mode idle; user must click Sửa to enter editing
+
+            // Đưa Form về trạng thái Idle (chưa cho sửa ngay cho đến khi bấm nút Sửa)
             SetMode(FormMode.Idle);
         }
 
@@ -438,8 +597,8 @@ namespace GUI_QLNH
             { MessageBox.Show("Chọn một dòng để sửa!"); return; }
 
             SetMode(FormMode.Editing);
-            MessageBox.Show("Chỉnh thông tin rồi nhấn Lưu để cập nhật.");
             txtTenNV.Focus();
+            txtTenNV.SelectAll();
         }
 
         private void SelectRowByMa(string ma)

@@ -11,6 +11,8 @@ namespace DTO_QLNH
         public DateTime NgayLamViec { get; set; } // SMALLDATETIME NULL represented by DateTime.MinValue
 
         // (tuỳ DB) – nếu có cột mật khẩu
-        public string MatKhau { get; set; }       // NVARCHAR(...) hoặc PasswordHash
+        public string MatKhau { get; set; }
+        // NVARCHAR(...) hoặc PasswordHash
+       
     }
 }

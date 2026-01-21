@@ -18,15 +18,16 @@ namespace GUI_QLNH
 
         private enum Mode { Idle, Adding, Editing }
         private Mode _mode = Mode.Idle;
-
-        private const string SelectCol = "Chon";
+                private const string SelectCol = "Chon";
 
         public FormDatTiec()
         {
             InitializeComponent();
-            ConfigureGrid();
 
+
+            ConfigureGrid();
             EnsureExportButtonExists();
+            txtSoPhieu.ReadOnly = true;
         }
 
         private void EnsureExportButtonExists()
@@ -93,7 +94,7 @@ namespace GUI_QLNH
             tip.SetToolTip(cboMaTK, "Chọn thực khách");
             tip.SetToolTip(cboMaNV, "Chọn nhân viên");
             tip.SetToolTip(nudSoLuong, "Số lượng khách");
-            tip.SetToolTip(txtPhong, "Tên phòng/ sảnh");
+            tip.SetToolTip(cboPhong, "Chọn phòng/ sảnh");
             tip.SetToolTip(cboCa, "Chọn ca (CA1 / CA2 / ...)");
 
             // backup item cho Ca nếu Designer chưa có
@@ -117,6 +118,7 @@ namespace GUI_QLNH
         {
             var tks = _bll.GetThucKhach();
             var nvs = _bll.GetNhanVien();
+            var phongs = _bll.GetListPhong();
 
             cboMaTK.DisplayMember = "Ten";
             cboMaTK.ValueMember = "Ma";
@@ -125,6 +127,11 @@ namespace GUI_QLNH
             cboMaNV.DisplayMember = "Ten";
             cboMaNV.ValueMember = "Ma";
             cboMaNV.DataSource = nvs;
+
+            cboPhong.DisplayMember = "Ten"; // Hiển thị tên (VD: Phòng VIP 1)
+            cboPhong.ValueMember = "Ma";    // Giá trị ngầm (VD: P01)
+            cboPhong.DataSource = phongs;
+            cboPhong.SelectedIndex = -1;    // Mặc định không chọn gì
         }
 
         private void ConfigureGrid()
@@ -226,7 +233,7 @@ namespace GUI_QLNH
             if (cboCa.Items.Count > 0) cboCa.SelectedIndex = 0;
 
             nudSoLuong.Value = 0;
-            txtPhong.Clear();
+            cboPhong.SelectedIndex = -1; // <-- Thêm dòng này
             txtSearch.Clear();
             txtSoPhieu.Focus();
         }
@@ -256,7 +263,7 @@ namespace GUI_QLNH
                 MaTk = cboMaTK.SelectedValue?.ToString(),
                 MaNv = cboMaNV.SelectedValue?.ToString(),
                 SoLuongKhach = (int)nudSoLuong.Value,
-                Phong = txtPhong.Text.Trim(),
+                Phong = cboPhong.SelectedValue?.ToString(),
                 Ca = cboCa.Text.Trim()
             };
         }
@@ -284,7 +291,8 @@ namespace GUI_QLNH
                 nudSoLuong.Value = 0;
             }
 
-            txtPhong.Text = Convert.ToString(r.Cells["PHONG"].Value);
+            string maPhong = Convert.ToString(r.Cells["PHONG"].Value);
+            cboPhong.SelectedValue = maPhong;
 
             if (dgv.Columns.Contains("Ca"))
             {
@@ -309,8 +317,13 @@ namespace GUI_QLNH
             if (x.NgayDk == null)
             { MessageBox.Show("Vui lòng chọn ngày đặt."); dtpNgayDK.Focus(); return false; }
 
-            if (x.NgayDk.Value.Date < DateTime.Today.Date)
-            { MessageBox.Show("Ngày đặt không được nhỏ hơn hôm nay."); dtpNgayDK.Focus(); return false; }
+            
+            if (isAdd && x.NgayDk.Value.Date < DateTime.Today.Date)
+            {
+                MessageBox.Show("Ngày đặt không được nhỏ hơn hôm nay.");
+                dtpNgayDK.Focus();
+                return false;
+            }
 
             if (string.IsNullOrWhiteSpace(x.MaTk))
             { MessageBox.Show("Vui lòng chọn thực khách."); cboMaTK.Focus(); return false; }
@@ -322,7 +335,11 @@ namespace GUI_QLNH
             { MessageBox.Show("Số lượng khách phải lớn hơn 0."); nudSoLuong.Focus(); return false; }
 
             if (string.IsNullOrWhiteSpace(x.Phong))
-            { MessageBox.Show("Vui lòng nhập tên phòng."); txtPhong.Focus(); return false; }
+            {
+                MessageBox.Show("Vui lòng chọn phòng."); // Sửa thông báo
+                cboPhong.Focus(); // Focus vào combo box
+                return false;
+            }
 
             if (string.IsNullOrWhiteSpace(x.Ca))
             { MessageBox.Show("Vui lòng chọn ca."); cboCa.Focus(); return false; }
@@ -366,8 +383,12 @@ namespace GUI_QLNH
         // ====== buttons ======
         private void btnThem_Click(object sender, EventArgs e)
         {
-            ResetForm();
-            SetMode(Mode.Adding);
+            ResetForm();          // Xóa trắng các ô
+            SetMode(Mode.Adding); // Chuyển sang chế độ Thêm
+
+            // ===> THÊM DÒNG NÀY ĐỂ TỰ ĐỘNG SINH MÃ <===
+            txtSoPhieu.Text = _bll.TaoSoPhieuTuDong();
+            // ==========================================
         }
 
         private void btnSua_Click(object sender, EventArgs e)
@@ -482,71 +503,86 @@ namespace GUI_QLNH
             try
             {
                 dgv.EndEdit();
-                var ids = GetCheckedIds();
+                var ids = GetCheckedIds(); // Lấy danh sách các mã SoPhieu được tích chọn
 
+                // TRƯỜNG HỢP 1: XÓA HÀNG LOẠT
                 if (ids.Any())
                 {
-                    if (MessageBox.Show(
-                        $"Xóa {ids.Count} phiếu đã chọn?",
-                        "Xác nhận",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning) != DialogResult.Yes)
+                    if (MessageBox.Show($"Bạn đã chọn {ids.Count} phiếu. Hệ thống sẽ xóa các phiếu hợp lệ và giữ lại các phiếu đã lập hóa đơn. Tiếp tục?",
+                        "Xác nhận xóa hàng loạt", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes)
                         return;
 
-                    int okCnt = 0, failCnt = 0;
+                    int okCnt = 0;
+                    List<string> lockedIds = new List<string>(); // Danh sách chứa các mã bị dính khóa
+
                     foreach (var id in ids)
                     {
                         try
                         {
-                            if (_bll.Delete(id)) okCnt++;
-                            else failCnt++;
+                            // Gọi BLL để xóa. Hàm Delete trong DAL của bạn đã có check HoaDon
+                            if (_bll.Delete(id))
+                            {
+                                okCnt++;
+                            }
+                            else
+                            {
+                                // Nếu trả về false nghĩa là dính khóa (có hóa đơn)
+                                lockedIds.Add(id);
+                            }
                         }
-                        catch
+                        catch (Exception)
                         {
-                            failCnt++;
+                            // Nếu dính lỗi SQL ngoại lệ cũng đưa vào danh sách lỗi
+                            lockedIds.Add(id);
                         }
                     }
+
+                    // TỔNG HỢP THÔNG BÁO
+                    string message = $"Đã xóa thành công: {okCnt} phiếu.";
+                    if (lockedIds.Count > 0)
+                    {
+                        message += $"\n\n[CẢNH BÁO CHO QUẢN LÝ]: {lockedIds.Count} phiếu sau đã có hóa đơn nên không thể xóa:\n"
+                                   + string.Join(", ", lockedIds);
+                    }
+
+                    MessageBox.Show(message, "Kết quả xử lý", MessageBoxButtons.OK,
+                        lockedIds.Count > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
 
                     LoadGrid();
                     ResetForm();
                     SetMode(Mode.Idle);
                     LoadTreeRoots();
-
-                    MessageBox.Show($"Đã xóa: {okCnt} | Lỗi: {failCnt}");
                 }
+                // TRƯỜNG HỢP 2: XÓA ĐƠN LẺ (Khi không tích checkbox nào)
                 else
                 {
                     var id = txtSoPhieu.Text.Trim();
                     if (string.IsNullOrEmpty(id))
                     {
-                        MessageBox.Show("Chọn một dòng để xóa hoặc tick trong lưới!");
+                        MessageBox.Show("Vui lòng chọn một phiếu trên lưới hoặc tích chọn để xóa!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
-                    if (MessageBox.Show(
-                        "Xóa phiếu này?",
-                        "Xác nhận",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question) != DialogResult.Yes)
+                    if (MessageBox.Show($"Xóa phiếu đặt tiệc {id}?", "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                         return;
 
                     if (_bll.Delete(id))
                     {
+                        MessageBox.Show("Xóa thành công!", "Thông báo");
                         LoadGrid();
                         ResetForm();
                         SetMode(Mode.Idle);
                         LoadTreeRoots();
-                        MessageBox.Show("Đã xóa!");
                     }
                     else
                     {
-                        MessageBox.Show("Không thể xóa.");
+                        MessageBox.Show($"[CẢNH BÁO]: Phiếu {id} đã lập hóa đơn hoặc không tồn tại. Không thể xóa!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi hệ thống: " + ex.Message, "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -678,5 +714,7 @@ namespace GUI_QLNH
                 }
             }
         }
+
+    
     }
 }

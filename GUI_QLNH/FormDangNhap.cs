@@ -21,7 +21,6 @@ namespace GUI_QLNH
 
         public FormDangNhap()
         {
-            // BƯỚC 1: Bắt lỗi ngay tại Constructor
             try
             {
                 InitializeComponent();
@@ -42,21 +41,24 @@ namespace GUI_QLNH
 
         protected override void OnLoad(EventArgs e)
         {
-            // BƯỚC 2: Bắt lỗi tại sự kiện Load
             try
             {
                 base.OnLoad(e);
                 if (IsDesignMode()) return;
 
-                // Thử canh chỉnh layout, nếu lỗi thì bỏ qua chứ không cho crash
+                // Thử canh chỉnh layout
                 try { UpdateResponsiveLayout(); } catch { }
 
-                // Gắn sự kiện
+                // --- GẮN SỰ KIỆN ---
                 chkShowPass.CheckedChanged -= chkShowPass_CheckedChanged;
                 chkShowPass.CheckedChanged += chkShowPass_CheckedChanged;
 
                 txtMatKhau.KeyDown -= txtMatKhau_KeyDown;
                 txtMatKhau.KeyDown += txtMatKhau_KeyDown;
+
+                // [MỚI] Gắn sự kiện Enter cho Tên đăng nhập
+                txtTenDangNhap.KeyDown -= txtTenDangNhap_KeyDown;
+                txtTenDangNhap.KeyDown += txtTenDangNhap_KeyDown;
 
                 txtTenDangNhap.TextChanged -= TxtTenDangNhap_TextChanged;
                 txtTenDangNhap.TextChanged += TxtTenDangNhap_TextChanged;
@@ -76,12 +78,11 @@ namespace GUI_QLNH
                 }
                 catch (Exception exRadio)
                 {
-                    MessageBox.Show("Lỗi khi tìm RadioButton: " + exRadio.Message);
+                    Debug.WriteLine("Lỗi khi tìm RadioButton: " + exRadio.Message);
                 }
             }
             catch (Exception ex)
             {
-                // Đây là nơi sẽ hiện ra lỗi khiến Form bạn bị tắt ngúm
                 MessageBox.Show("Lỗi nghiêm trọng trong OnLoad: " + ex.Message);
             }
         }
@@ -103,7 +104,6 @@ namespace GUI_QLNH
                 int leftWidth = (int)Math.Round(ClientSize.Width * LeftRatio);
                 leftWidth = Math.Max(LeftMin, Math.Min(leftWidth, LeftMax));
 
-                // Fix lỗi Crash nếu Width quá nhỏ
                 if (splitMain.Width > LeftMin)
                 {
                     int maxDistance = splitMain.Width - 50;
@@ -135,8 +135,10 @@ namespace GUI_QLNH
                 btnDangNhap.Left = inputLeft;
                 btnDangNhap.Width = inputWidth;
             }
-            catch { /* Bỏ qua lỗi giao diện để form không bị tắt */ }
+            catch { }
         }
+
+        // --- CÁC SỰ KIỆN XỬ LÝ ---
 
         private void chkShowPass_CheckedChanged(object sender, EventArgs e)
         {
@@ -144,38 +146,56 @@ namespace GUI_QLNH
             txtMatKhau.UseSystemPasswordChar = !chkShowPass.Checked;
         }
 
+        // [MỚI] Xử lý Enter tại ô Mật khẩu
         private void txtMatKhau_KeyDown(object sender, KeyEventArgs e)
         {
             if (IsDesignMode()) return;
-            if (e.KeyCode == Keys.Enter) btnDangNhap.PerformClick();
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // Chặn tiếng Bíp
+                btnDangNhap.PerformClick();
+            }
+        }
+
+        // [MỚI] Xử lý Enter tại ô Tên đăng nhập (Thông minh)
+        private void txtTenDangNhap_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (IsDesignMode()) return;
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // Chặn tiếng Bíp
+
+                // Nếu chưa có mật khẩu -> Nhảy xuống nhập mật khẩu
+                if (string.IsNullOrWhiteSpace(txtMatKhau.Text))
+                {
+                    txtMatKhau.Focus();
+                }
+                // Nếu đã có mật khẩu -> Đăng nhập luôn
+                else
+                {
+                    btnDangNhap.PerformClick();
+                }
+            }
         }
 
         private void TxtTenDangNhap_TextChanged(object sender, EventArgs e)
         {
-            // BƯỚC 3: QUAN TRỌNG NHẤT
-            // Nếu Form chưa hiện lên hẳn (Visible = false) thì KHÔNG CHẠY LOGIC NÀY
-            // Vì nếu chạy lúc này, nó gọi SQL -> Lỗi kết nối -> Sập Form
             if (!this.Visible || IsDesignMode()) return;
 
             try
             {
                 var user = txtTenDangNhap.Text.Trim();
-                if (string.IsNullOrEmpty(user)) return; // Bỏ qua nếu rỗng
+                if (string.IsNullOrEmpty(user)) return;
 
                 if (txtMatKhau.Focused) return;
                 if (string.Equals(user, lastAutoFillUser, StringComparison.Ordinal)) return;
 
-                // Thêm Try-Catch từng lệnh gọi SQL để không sập chương trình
                 string pwd = null;
                 try
                 {
                     pwd = TaiKhoanBLL.GetPasswordByUser(user);
                 }
-                catch (Exception exSQL)
-                {
-                    // Nếu lỗi SQL ở đây, ta chỉ ghi nhận chứ không crash
-                    Debug.WriteLine("Lỗi auto-fill SQL: " + exSQL.Message);
-                }
+                catch { }
 
                 if (string.IsNullOrEmpty(pwd))
                 {
@@ -188,7 +208,7 @@ namespace GUI_QLNH
                     lastAutoFillUser = user;
                 }
             }
-            catch { /* ignore */ }
+            catch { }
         }
 
         private void btnDangNhap_Click(object sender, EventArgs e)
@@ -198,14 +218,17 @@ namespace GUI_QLNH
             string user = txtTenDangNhap.Text.Trim();
             string pass = txtMatKhau.Text.Trim();
 
+            // 1. Kiểm tra rỗng
             if (string.IsNullOrEmpty(user) || string.IsNullOrEmpty(pass))
             {
-                MessageBox.Show("Vui lòng nhập Tên đăng nhập và Mật khẩu.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Vui lòng nhập đầy đủ Tên đăng nhập và Mật khẩu.",
+                                "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             try
             {
+                // Lấy Radio Button
                 var rbQL = this.Controls.Find("rdoQuanLy", true).OfType<RadioButton>().FirstOrDefault() ?? GetRadioQuanLy();
                 var rbNV = this.Controls.Find("rdoNhanVien", true).OfType<RadioButton>().FirstOrDefault() ?? GetRadioNhanVien();
 
@@ -214,44 +237,27 @@ namespace GUI_QLNH
 
                 if (!isQuanLy && !isNhanVien)
                 {
-                    MessageBox.Show("Vui lòng chọn Quản lý hoặc Nhân viên.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Vui lòng chọn vai trò: Quản lý hoặc Nhân viên.",
+                                    "Chưa chọn vai trò", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
+                // ============================================================
+                // TRƯỜNG HỢP 1: NGƯỜI DÙNG CHỌN "QUẢN LÝ"
+                // ============================================================
                 if (isQuanLy)
                 {
                     var tk = new TaiKhoan { TenDangNhap = user, MatKhau = pass };
-                    // Nếu lỗi SQL xảy ra ở đây, nó sẽ nhảy xuống catch thay vì tắt app
+
+                    // Thử đăng nhập đúng vai trò Quản lý
                     if (TaiKhoanBLL.DangNhapTaiKhoan(tk, out string vaiTro, out string hoTen))
                     {
+                        // -> THÀNH CÔNG
                         if (string.IsNullOrWhiteSpace(vaiTro)) vaiTro = "Admin";
                         if (string.IsNullOrWhiteSpace(hoTen)) hoTen = user;
 
                         var appUser = new AppUser { UserName = user, FullName = hoTen, Role = vaiTro };
-                        MessageBox.Show($"Đăng nhập thành công!\nXin chào {appUser.FullName}.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                        this.LoggedInUser = appUser;
-                        this.DialogResult = DialogResult.OK;
-                        this.Close(); // Đóng form để về Program.cs
-                        return;
-                    }
-                    else
-                    {
-                        MessageBox.Show("Sai tài khoản hoặc mật khẩu Quản lý.", "Thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-
-                if (isNhanVien)
-                {
-                    if (NhanVienBLL.DangNhapNhanVien(user, pass, out string tenNv))
-                    {
-                        if (string.IsNullOrWhiteSpace(tenNv)) tenNv = user;
-                        AppSession.CurrentMaNV = user;
-
-                        var appUser = new AppUser { UserName = user, FullName = tenNv, Role = "NhanVien" };
-                        MessageBox.Show($"Đăng nhập thành công!\nXin chào {appUser.FullName}.", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
+                        MessageBox.Show($"Đăng nhập thành công!\nXin chào quản lý: {appUser.FullName}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         this.LoggedInUser = appUser;
                         this.DialogResult = DialogResult.OK;
                         this.Close();
@@ -259,15 +265,96 @@ namespace GUI_QLNH
                     }
                     else
                     {
-                        MessageBox.Show("Sai mã nhân viên hoặc mật khẩu.", "Thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        // -> THẤT BẠI. NHƯNG KHOAN, KIỂM TRA XEM CÓ PHẢI LÀ NHÂN VIÊN KHÔNG?
+                        string tempTenNV;
+                        if (NhanVienBLL.DangNhapNhanVien(user, pass, out tempTenNV))
+                        {
+                            // Nếu vào được đây, tức là User/Pass đúng, nhưng nó là Nhân Viên
+                            MessageBox.Show($"Tài khoản \"{user}\" là tài khoản NHÂN VIÊN.\n\nVui lòng chọn vào ô \"Nhân Viên\" để đăng nhập.",
+                                            "Sai Vai Trò", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        else
+                        {
+                            // [CẬP NHẬT MỚI] Thay vì báo lỗi chung chung, gọi hàm kiểm tra chi tiết
+                            CheckAccountExistenceAndShowError(user);
+                        }
+                        return;
+                    }
+                }
+
+                // ============================================================
+                // TRƯỜNG HỢP 2: NGƯỜI DÙNG CHỌN "NHÂN VIÊN"
+                // ============================================================
+                if (isNhanVien)
+                {
+                    // Thử đăng nhập đúng vai trò Nhân viên
+                    if (NhanVienBLL.DangNhapNhanVien(user, pass, out string tenNv))
+                    {
+                        // -> THÀNH CÔNG
+                        if (string.IsNullOrWhiteSpace(tenNv)) tenNv = user;
+                        AppSession.CurrentMaNV = user;
+
+                        var appUser = new AppUser { UserName = user, FullName = tenNv, Role = "NhanVien" };
+                        MessageBox.Show($"Đăng nhập thành công!\nXin chào nhân viên: {appUser.FullName}", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.LoggedInUser = appUser;
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                        return;
+                    }
+                    else
+                    {
+                        // -> THẤT BẠI. KHOAN, KIỂM TRA XEM CÓ PHẢI LÀ QUẢN LÝ KHÔNG?
+                        // Gọi thử hàm đăng nhập Quản lý để check
+                        var tkCheck = new TaiKhoan { TenDangNhap = user, MatKhau = pass };
+                        string tempRole, tempName;
+
+                        if (TaiKhoanBLL.DangNhapTaiKhoan(tkCheck, out tempRole, out tempName))
+                        {
+                            // Nếu vào được đây, tức là User/Pass đúng, nhưng nó là Quản Lý
+                            MessageBox.Show($"Tài khoản \"{user}\" là tài khoản QUẢN LÝ.\n\nVui lòng chọn vào ô \"Quản Lý\" để đăng nhập.",
+                                            "Sai Vai Trò", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                        else
+                        {
+                            // [CẬP NHẬT MỚI] Thay vì báo lỗi chung chung, gọi hàm kiểm tra chi tiết
+                            CheckAccountExistenceAndShowError(user);
+                        }
                         return;
                     }
                 }
             }
             catch (Exception ex)
             {
-                // Đây là chỗ bắt lỗi SQL khi bấm nút Đăng nhập
-                MessageBox.Show("Lỗi kết nối CSDL hoặc lỗi hệ thống:\n" + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi kết nối CSDL hoặc lỗi hệ thống:\n" + ex.Message,
+                                "Lỗi Hệ Thống", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // =========================================================================
+        // HÀM PHỤ TRỢ MỚI: Kiểm tra tài khoản tồn tại hay sai mật khẩu
+        // =========================================================================
+        private void CheckAccountExistenceAndShowError(string user)
+        {
+            // Kiểm tra tồn tại bên Admin (TaiKhoan)
+            // Lưu ý: Hàm GetPasswordByUser trả về null nếu không tìm thấy user
+            string passAdmin = null;
+            try { passAdmin = TaiKhoanBLL.GetPasswordByUser(user); } catch { }
+
+            // Kiểm tra tồn tại bên Nhân viên
+            string passNV = null;
+            try { passNV = NhanVienBLL.GetPasswordByMaNV(user); } catch { }
+
+            // Nếu cả 2 đều null hoặc rỗng -> Tài khoản hoàn toàn không có trong hệ thống
+            if (string.IsNullOrEmpty(passAdmin) && string.IsNullOrEmpty(passNV))
+            {
+                MessageBox.Show($"Tài khoản \"{user}\" không tồn tại trong hệ thống!",
+                                "Tài khoản không tồn tại", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            else
+            {
+                // Nếu tìm thấy 1 trong 2 -> Có tồn tại nhưng đăng nhập thất bại -> Sai mật khẩu
+                MessageBox.Show("Mật khẩu không đúng. Vui lòng kiểm tra lại.",
+                                "Đăng nhập thất bại", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -21,6 +21,8 @@ namespace GUI_QLNH
         {
             InitializeComponent();
 
+            this.Load += (s, e) => LoadData();
+
             // Grid
             dgv.AutoGenerateColumns = false;
             dgv.AllowUserToAddRows = false;
@@ -51,7 +53,7 @@ namespace GUI_QLNH
             dtTo.Enabled = false;
 
             EnsurePayButtonExists();
-            LoadData();
+          
         }
 
         /// <summary>Đảm bảo có nút Thanh toán (phòng khi Designer mất control).</summary>
@@ -200,11 +202,13 @@ namespace GUI_QLNH
         // ------------ Data ------------
         private void LoadData()
         {
+            if (string.IsNullOrEmpty(CurrentManv)) return;
             string kw = (txtSearch.Text ?? "").Trim();
             DateTime? from = null, to = null;
             if (string.IsNullOrWhiteSpace(kw) && chkDate.Checked) { from = dtFrom.Value.Date; to = dtTo.Value.Date; }
 
-            DataTable tb = _bll.ListChoThanhToan(kw, from, to);
+
+            DataTable tb = _bll.ListChoThanhToan(kw, from, to, CurrentManv);
 
             if (tb != null)
             {
@@ -239,6 +243,7 @@ namespace GUI_QLNH
                 }
 
                 dgv.DataSource = tb;
+                lblCount.Text = $"Có {tb.Rows.Count} hoá đơn (Lọc theo nhân viên: {CurrentManv})";
                 try { colTrangThai.DataPropertyName = "StatusDisplay"; } catch { }
 
                 // Tô màu

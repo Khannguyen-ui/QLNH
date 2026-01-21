@@ -42,8 +42,19 @@ namespace BLL_QLNH
             bool biTrung = _dal.KiemTraTrungPhongCa(ngayDat, phong, ca, soPhieuDangSua);
             return !biTrung;
         }
+        public List<LookItem> GetListPhong() => _dal.GetListPhong();
 
         /* =============== THÊM / CẬP NHẬT PHIẾU =============== */
+        //tạo phiếu tự động
+        public string TaoSoPhieuTuDong()
+        {
+            // Cấu trúc mã 10 ký tự:
+            // DT (2 ký tự) + dd (2 số ngày) + HH (2 số giờ) + mm (2 số phút) + ss (2 số giây)
+            // TỔNG CỘNG: 2 + 2 + 2 + 2 + 2 = 10 KÝ TỰ
+
+            // Ví dụ: Ngày 21 lúc 22:30:05 -> DT21223005
+            return "DT" + DateTime.Now.ToString("ddHHmmss");
+        }
 
         // Thêm phiếu mới (mặc định đặt trạng thái CHO_TT để có thể thanh toán sau)
         public bool ThemDatTiec(

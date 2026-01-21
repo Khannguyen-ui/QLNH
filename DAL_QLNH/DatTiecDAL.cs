@@ -285,7 +285,7 @@ namespace DAL_QLNH
             using (var cn = new SqlConnection(_cnStr))
             {
                 using (var da = new SqlDataAdapter(@"
-                SELECT TOP1
+                SELECT TOP 1
                     d.SoPhieu, d.NgayDK, d.NgayDatNgay, d.MATK, tk.TENTK,
                     d.MANV, nv.TENNV, d.SoLuongKhach, d.PHONG, d.Ca, d.TrangThai
                 FROM DatTiec d
@@ -452,6 +452,47 @@ namespace DAL_QLNH
                     var tb = new DataTable();
                     da.Fill(tb);
                     return tb;
+                }
+            }
+        }
+        // Trong class DatTiecDAL
+
+        public List<LookItem> GetListPhong()
+        {
+            var list = new List<LookItem>();
+            using (var cn = new SqlConnection(_cnStr))
+            {
+                // Lấy Mã và Tên từ bảng DmPhong
+                using (var cmd = new SqlCommand(@"SELECT MaPhong, TenPhong FROM DmPhong ORDER BY TenPhong", cn))
+                {
+                    cn.Open();
+                    using (var rd = cmd.ExecuteReader())
+                    {
+                        while (rd.Read())
+                        {
+                            list.Add(new LookItem
+                            {
+                                // Ma: Dùng để lưu vào DB (Khóa chính)
+                                Ma = rd["MaPhong"].ToString().Trim(),
+                                // Ten: Dùng để hiển thị lên ComboBox
+                                Ten = rd["TenPhong"].ToString().Trim()
+                            });
+                        }
+                    }
+                }
+            }
+            return list;
+        }
+        public string GetLastSoPhieu()
+        {
+            using (var cn = new SqlConnection(_cnStr))
+            {
+                cn.Open();
+                // Lấy phiếu có mã lớn nhất (mới nhất) để tính toán số tiếp theo
+                using (var cmd = new SqlCommand("SELECT TOP 1 SoPhieu FROM DatTiec ORDER BY SoPhieu DESC", cn))
+                {
+                    var result = cmd.ExecuteScalar();
+                    return result != null ? result.ToString() : "";
                 }
             }
         }

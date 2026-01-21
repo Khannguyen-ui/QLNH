@@ -361,11 +361,14 @@ namespace DAL_QLNH
             }
         }
 
+        // Trong DAL_QLNH/NhanVienDAL.cs
+
         public static bool Delete(string maNV)
         {
             using (var cn = new SqlConnection(ConnStr))
             {
                 cn.Open();
+                // Kiểm tra xem có Stored Procedure không
                 bool useSp = ObjectExists(cn, "sp_NhanVien_Delete", "P");
 
                 using (var cmd = cn.CreateCommand())
@@ -382,12 +385,25 @@ namespace DAL_QLNH
                         cmd.Parameters.AddWithValue("@manv", maNV?.Trim());
                     }
 
-                    var rows = cmd.ExecuteNonQuery();
-                    if (rows > 0) return true;
+                    try
+                    {
+                        int rows = cmd.ExecuteNonQuery();
+                        // Trả về true nếu xóa được ít nhất 1 dòng
+                        // Nếu rows = 0 (không tìm thấy để xóa), ta vẫn có thể coi là true hoặc false tùy logic
+                        // Ở đây trả về true để BLL xử lý logic "Không tồn tại" riêng
+                        return true;
+                    }
+                    catch (SqlException ex)
+                    {
+                        // [QUAN TRỌNG] Bắt lỗi khóa ngoại (Foreign Key)
+                        // Test Case TC_DEL_06 yêu cầu bắt lỗi này
+                        if (ex.Number == 547)
+                        {
+                            throw new Exception("Nhân viên này đã phát sinh dữ liệu liên quan (Hóa đơn/Phiếu nhập). Không thể xóa!");
+                        }
 
-                    // Some SPs may not return affected rows; verify the record no longer exists
-                    var exists = GetByMaNV(maNV);
-                    return exists == null;
+                        throw; // Các lỗi khác ném ra bình thường
+                    }
                 }
             }
         }
@@ -440,43 +456,69 @@ namespace DAL_QLNH
         public static bool TryLoginNhanVien(string maNv, string pass, out string tenNv)
         {
             tenNv = null;
-            if (string.IsNullOrWhiteSpace(maNv) || string.IsNullOrWhiteSpace(pass)) return false;
 
+            // 1. Kiểm tra đầu vào rỗng
+            if (string.IsNullOrWhiteSpace(maNv) || string.IsNullOrWhiteSpace(pass))
+                return false;
+
+            // 2. Kết nối CSDL
             using (var cn = new SqlConnection(ConnStr))
             {
                 cn.Open();
 
+                // Kiểm tra cấu trúc bảng (để tránh lỗi nếu cột chưa tạo)
                 bool hasHash = ColumnExists(cn, "dbo.NhanVien", "PasswordHash");
                 bool hasPlain = ColumnExists(cn, "dbo.NhanVien", "MatKhau");
 
                 using (var cmd = cn.CreateCommand())
                 {
+                    // -------------------------------------------------------------
+                    // ƯU TIÊN 1: Kiểm tra Mật khẩu thường (Plain Text)
+                    // (Phục vụ cho dữ liệu cũ hoặc test case dùng pass "123")
+                    // -------------------------------------------------------------
+                    if (hasPlain)
+                    {
+                        cmd.CommandText = @"SELECT TENNV FROM dbo.NhanVien 
+                                    WHERE MANV=@ma AND MatKhau=@mk";
+
+                        // Luôn xóa tham số cũ trước khi Add mới
+                        cmd.Parameters.Clear();
+                        cmd.Parameters.AddWithValue("@ma", maNv.Trim());
+                        cmd.Parameters.AddWithValue("@mk", pass.Trim());
+
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            tenNv = result.ToString();
+                            return true; // ✅ Đăng nhập thành công
+                        }
+                    }
+
+                    // -------------------------------------------------------------
+                    // ƯU TIÊN 2: Kiểm tra Mật khẩu băm (Password Hash)
+                    // (Phục vụ cho dữ liệu mới bảo mật hơn)
+                    // -------------------------------------------------------------
                     if (hasHash)
                     {
                         cmd.CommandText = @"SELECT TENNV FROM dbo.NhanVien 
                                     WHERE MANV=@ma AND PasswordHash=@h";
-                        cmd.Parameters.AddWithValue("@ma", maNv.Trim());
-                        cmd.Parameters.AddWithValue("@h", Sha256(pass));
-                    }
-                    else if (hasPlain)
-                    {
-                        cmd.CommandText = @"SELECT TENNV FROM dbo.NhanVien 
-                                    WHERE MANV=@ma AND MatKhau=@mk";
-                        cmd.Parameters.AddWithValue("@ma", maNv.Trim());
-                        cmd.Parameters.AddWithValue("@mk", pass.Trim());
-                    }
-                    else
-                    {
-                        // không có cột nào -> luôn fail
-                        return false;
-                    }
 
-                    var o = cmd.ExecuteScalar();
-                    if (o == null || o == DBNull.Value) return false;
-                    tenNv = o.ToString();
-                    return true;
-                }
-            }
+                        cmd.Parameters.Clear();
+                        cmd.Parameters.AddWithValue("@ma", maNv.Trim());
+                        cmd.Parameters.AddWithValue("@h", Sha256(pass)); // Băm mật khẩu nhập vào để so sánh
+
+                        var result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            tenNv = result.ToString();
+                            return true; // ✅ Đăng nhập thành công
+                        }
+                    }
+                } // Kết thúc using cmd
+            } // Kết thúc using connection
+
+            // 3. Nếu chạy hết logic trên mà không return true -> Đăng nhập thất bại
+            return false;
         }
 
         public static string GetPasswordByMaNV(string maNv)

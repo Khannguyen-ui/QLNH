@@ -76,9 +76,11 @@ namespace BLL_QLNH
 
         // ======= Danh sách CHỜ THANH TOÁN =======
         /// <summary>Danh sách phiếu/hóa đơn ở trạng thái chờ thanh toán (lưới FormLapThanhToan).</summary>
-        public DataTable ListChoThanhToan(string keyword = "", DateTime? from = null, DateTime? to = null)
+        
+        public DataTable ListChoThanhToan(string keyword = "", DateTime? from = null, DateTime? to = null, string maNV = "")
         {
-            return _dal.ListChoThanhToan(keyword?.Trim() ?? string.Empty, from, to);
+            // Truyền thêm tham số maNV xuống DAL
+            return _dal.ListChoThanhToan(keyword?.Trim() ?? string.Empty, from, to, maNV);
         }
 
         // ======= Lấy hoá đơn theo SỐ PHIẾU =======
@@ -177,5 +179,6 @@ namespace BLL_QLNH
                 return false;
             }
         }
+
     }
 }

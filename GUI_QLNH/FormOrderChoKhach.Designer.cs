@@ -12,7 +12,7 @@ namespace GUI_QLNH
                 components.Dispose();
             base.Dispose(disposing);
         }
-
+        
         #region Windows Form Designer generated code
 
         // ====== THÊM MỚI 2 PANEL KHUNG ======

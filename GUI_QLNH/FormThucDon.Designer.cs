@@ -17,7 +17,7 @@ namespace GUI_QLNH
 
         private TextBox txtMaTD;
         private TextBox txtTenMon;
-        private TextBox txtDVT;
+        private ComboBox cboDVT;
         private TextBox txtGiaTien;
         private TextBox txtSoLuongTon;
         private TextBox txtGhiChu;
@@ -55,7 +55,7 @@ namespace GUI_QLNH
             this.lblSoLuongTon = new System.Windows.Forms.Label();
             this.txtMaTD = new System.Windows.Forms.TextBox();
             this.txtTenMon = new System.Windows.Forms.TextBox();
-            this.txtDVT = new System.Windows.Forms.TextBox();
+            this.cboDVT = new System.Windows.Forms.ComboBox();
             this.txtGiaTien = new System.Windows.Forms.TextBox();
             this.txtSoLuongTon = new System.Windows.Forms.TextBox();
             this.txtGhiChu = new System.Windows.Forms.TextBox();
@@ -166,11 +166,12 @@ namespace GUI_QLNH
             // 
             // txtDVT
             // 
-            this.txtDVT.Location = new System.Drawing.Point(180, 170);
-            this.txtDVT.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.txtDVT.Name = "txtDVT";
-            this.txtDVT.Size = new System.Drawing.Size(256, 26);
-            this.txtDVT.TabIndex = 10;
+            this.cboDVT.FormattingEnabled = true;
+            this.cboDVT.Location = new System.Drawing.Point(180, 170);
+            this.cboDVT.Name = "cboDVT";
+            this.cboDVT.Size = new System.Drawing.Size(256, 28);
+            this.cboDVT.TabIndex = 10;
+            this.cboDVT.DropDownStyle = ComboBoxStyle.DropDownList;
             // 
             // txtGiaTien
             // 
@@ -350,7 +351,7 @@ namespace GUI_QLNH
             this.Controls.Add(this.lblSoLuongTon);
             this.Controls.Add(this.txtSoLuongTon);
             this.Controls.Add(this.lblDVT);
-            this.Controls.Add(this.txtDVT);
+            this.Controls.Add(this.cboDVT);
             this.Controls.Add(this.lblGhiChu);
             this.Controls.Add(this.txtGhiChu);
             this.Controls.Add(this.lblSearch);

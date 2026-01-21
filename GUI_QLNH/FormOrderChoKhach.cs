@@ -15,13 +15,21 @@ namespace GUI_QLNH
             "Server=VANKHAN;Database=QLNHS;Trusted_Connection=True;TrustServerCertificate=True";
 
         // Mã nhân viên hiện tại (FormMenu set trước khi Show)
-        public string CurrentManv { get; set; } = "NV01";
+        public string CurrentManv { get; set; } 
+        // Thêm vào đầu class FormOrderChoKhach
+        private bool _isExistingBooking = false; // Cờ đánh dấu có phiếu đặt trước hay không
+        private string _currentSoPhieu = "";    // Lưu số phiếu đang xử lý
 
         // =============== CTOR ===============
         public FormOrderChoKhach()
         {
             InitializeComponent();
-
+            cbKhach.SelectedIndexChanged += cbKhach_SelectedIndexChanged;
+            if (cbKhach != null)
+            {
+                cbKhach.SelectedIndexChanged -= cbKhach_SelectedIndexChanged;
+                cbKhach.SelectedIndexChanged += cbKhach_SelectedIndexChanged;
+            }
             // Grid
             if (dgvTD != null)
             {
@@ -81,11 +89,7 @@ namespace GUI_QLNH
                 btnApplySL.Click -= btnApplySL_Click;
                 btnApplySL.Click += btnApplySL_Click;
             }
-            if (btnTaoPhieu != null)
-            {
-                btnTaoPhieu.Click -= btnTaoPhieu_Click;
-                btnTaoPhieu.Click += btnTaoPhieu_Click;
-            }
+           
             if (btnThoat != null)
             {
                 btnThoat.Click -= btnThoat_Click;
@@ -119,6 +123,9 @@ namespace GUI_QLNH
         {
             CurrentManv = manv;
             if (lblNhanVien != null) lblNhanVien.Text = "Nhân viên: " + manv;
+
+            // QUAN TRỌNG: Phải gọi hàm này để nạp khách ngay khi biết nhân viên là ai
+            LoadKhachHang();
         }
 
         // =============== LOAD FORM ===============
@@ -148,22 +155,107 @@ namespace GUI_QLNH
                                 MessageBoxIcon.Error);
             }
         }
+        // =============== LUỒNG KIỂM TRA ĐẶT TRƯỚC ===============
+        private void cbKhach_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // Nếu đang chọn Order lẻ thì không cần kiểm tra phiếu đặt trước
+            if (cbKhach.SelectedValue == null || (chkOrderLe != null && chkOrderLe.Checked)) return;
+
+            string maTK = cbKhach.SelectedValue.ToString();
+
+            using (var cn = new SqlConnection(CONN))
+            {
+                try
+                {
+                    cn.Open();
+                    // Tìm phiếu mới nhất của khách này đang ở trạng thái Chờ thanh toán (Quản lý đã lập)
+                    string sql = @"SELECT TOP 1 SoPhieu, Phong, Ca, SoLuongKhach, NgayDK 
+                           FROM DatTiec 
+                           WHERE MATK = @ma AND TrangThai = N'CHO_TT' 
+                           ORDER BY NgayDK DESC";
+
+                    using (var cmd = new SqlCommand(sql, cn))
+                    {
+                        cmd.Parameters.AddWithValue("@ma", maTK);
+                        using (var dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read()) // LUỒNG 1: KHÁCH ĐÃ ĐẶT BÀN TRƯỚC
+                            {
+                                _isExistingBooking = true;
+                                _currentSoPhieu = dr["SoPhieu"].ToString();
+
+                                // Tự động điền dữ liệu Quản lý đã đặt lên giao diện
+                                if (cbPhong != null) cbPhong.Text = dr["Phong"].ToString();
+                                if (cbCa != null) cbCa.Text = dr["Ca"].ToString();
+                                if (numSoLuongKhach != null) numSoLuongKhach.Value = Convert.ToDecimal(dr["SoLuongKhach"]);
+                                if (dtNgay != null) dtNgay.Value = Convert.ToDateTime(dr["NgayDK"]);
+
+                                if (lblPhongCaStatus != null)
+                                {
+                                    lblPhongCaStatus.Text = "Khớp phiếu: " + _currentSoPhieu;
+                                    lblPhongCaStatus.ForeColor = Color.Blue;
+                                }
+
+                                // Khóa các ô thông tin để nhân viên không sửa nhầm sảnh của Quản lý
+                                cbPhong.Enabled = false;
+                                cbCa.Enabled = false;
+                            }
+                            else // LUỒNG 2: KHÁCH MỚI/CHƯA ĐẶT BÀN
+                            {
+                                _isExistingBooking = false;
+                                _currentSoPhieu = "";
+
+                                if (lblPhongCaStatus != null)
+                                {
+                                    lblPhongCaStatus.Text = "Khách mới (Tạo phiếu mới)";
+                                    lblPhongCaStatus.ForeColor = Color.Gray;
+                                }
+
+                                // Mở khóa để nhân viên tự chọn Phòng/Ca cho khách mới
+                                cbPhong.Enabled = true;
+                                cbCa.Enabled = true;
+                            }
+                        }
+                    }
+                }
+                catch { /* Xử lý lỗi kết nối */ }
+            }
+        }
 
         // =============== LOAD PHÒNG & CA (mặc định nếu DB bạn chưa có bảng) ===============
         private void LoadPhongVaCa()
         {
-            if (cbPhong != null)
+            using (var cn = new SqlConnection(CONN))
             {
-                cbPhong.Items.Clear();
-                cbPhong.Items.AddRange(new object[] { "Phòng 1", "Phòng 2", "Phòng 3", "VIP 1", "VIP 2" });
-                cbPhong.SelectedIndex = -1;
-            }
+                try
+                {
+                    cn.Open();
+                    // 1. Lấy dữ liệu phòng thật từ bảng DmPhong
+                    string sql = "SELECT MaPhong, TenPhong FROM DmPhong ORDER BY TenPhong";
+                    SqlDataAdapter da = new SqlDataAdapter(sql, cn);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
 
-            if (cbCa != null)
-            {
-                cbCa.Items.Clear();
-                cbCa.Items.AddRange(new object[] { "Ca sáng", "Ca trưa", "Ca tối" });
-                cbCa.SelectedIndex = -1;
+                    if (cbPhong != null)
+                    {
+                        cbPhong.DataSource = dt;
+                        cbPhong.DisplayMember = "TenPhong"; // Tên hiển thị cho nhân viên thấy
+                        cbPhong.ValueMember = "MaPhong";     // Mã thực tế để lưu vào Database
+                        cbPhong.SelectedIndex = -1;
+                    }
+
+                    // 2. Load Ca - Bạn nên để khớp với các mã CA1, CA2 như bên Quản lý
+                    if (cbCa != null)
+                    {
+                        cbCa.Items.Clear();
+                        cbCa.Items.AddRange(new object[] { "CA1", "CA2", "CA3" });
+                        cbCa.SelectedIndex = -1;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi tải danh mục phòng: " + ex.Message);
+                }
             }
         }
 
@@ -212,22 +304,26 @@ WHERE TABLE_NAME=@t AND COLUMN_NAME=@c;", cn, tx))
         // =============== CHECKBOX ORDER LẺ ===============
         private void chkOrderLe_CheckedChanged(object sender, EventArgs e)
         {
-            if (chkOrderLe == null) return;
-            bool modeLe = chkOrderLe.Checked;
+            bool isLe = chkOrderLe.Checked;
 
-            if (cbKhach != null) cbKhach.Enabled = !modeLe;
-            if (dtNgay != null) dtNgay.Enabled = !modeLe;
-            if (numSoLuongKhach != null) numSoLuongKhach.Enabled = !modeLe;
-            if (cbPhong != null) cbPhong.Enabled = !modeLe;
-            if (cbCa != null) cbCa.Enabled = !modeLe;
-            if (txtGhiChu != null) txtGhiChu.Enabled = !modeLe;
+            // Nếu là Order lẻ, vô hiệu hóa các lựa chọn đặt bàn
+            cbKhach.Enabled = !isLe;
+            cbPhong.Enabled = !isLe;
+            cbCa.Enabled = !isLe;
+            dtNgay.Enabled = !isLe;
 
-            if (modeLe)
+            if (isLe)
             {
-                if (numSoLuongKhach != null) numSoLuongKhach.Value = 1;
-                if (cbPhong != null) cbPhong.SelectedIndex = -1;
-                if (cbCa != null) cbCa.SelectedIndex = -1;
-                if (txtGhiChu != null) txtGhiChu.Text = "";
+                _isExistingBooking = false;
+                _currentSoPhieu = "";
+                lblPhongCaStatus.Text = "Chế độ: Order lẻ tại chỗ";
+                lblPhongCaStatus.ForeColor = Color.DarkGreen;
+                cbKhach.SelectedIndex = -1;
+            }
+            else
+            {
+                lblPhongCaStatus.Text = "Chế độ: Đặt theo phòng";
+                lblPhongCaStatus.ForeColor = Color.Black;
             }
         }
 
@@ -268,19 +364,31 @@ ORDER BY TenMon;";
         private void LoadKhachHang()
         {
             using (var cn = new SqlConnection(CONN))
-            using (var cmd = cn.CreateCommand())
             {
-                cmd.CommandText = "SELECT MaTK, TenTK FROM ThucKhach ORDER BY TenTK;";
-                var da = new SqlDataAdapter(cmd);
-                var tb = new DataTable();
-                da.Fill(tb);
-
-                if (cbKhach != null)
+                try
                 {
-                    cbKhach.DataSource = tb;
-                    cbKhach.DisplayMember = "TenTK";
-                    cbKhach.ValueMember = "MaTK";
-                    cbKhach.SelectedIndex = -1; // chưa chọn
+                    cn.Open();
+                    // Lấy toàn bộ danh sách thực khách, không phân biệt nhân viên phụ trách
+                    string sql = "SELECT MaTK, TenTK FROM ThucKhach ORDER BY TenTK;";
+
+                    using (var cmd = new SqlCommand(sql, cn))
+                    {
+                        var da = new SqlDataAdapter(cmd);
+                        var tb = new DataTable();
+                        da.Fill(tb);
+
+                        if (cbKhach != null)
+                        {
+                            cbKhach.DataSource = tb;
+                            cbKhach.DisplayMember = "TenTK";
+                            cbKhach.ValueMember = "MaTK";
+                            cbKhach.SelectedIndex = -1; // Để trống mặc định khi load form
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Lỗi tải danh sách khách: " + ex.Message);
                 }
             }
         }
@@ -430,6 +538,7 @@ ORDER BY TenMon;";
         private void btnTaoPhieu_Click(object sender, EventArgs e)
         {
             bool isOrderLe = chkOrderLe != null && chkOrderLe.Checked;
+            if (dgvTD != null) dgvTD.EndEdit();
 
             var dtGrid = dgvTD?.DataSource as DataTable;
             if (dtGrid == null) return;
@@ -925,7 +1034,151 @@ VALUES(@Ma, @Ten, N'', N'');", cn, tx))
 
         private void btnTaoPhieu_Click_1(object sender, EventArgs e)
         {
+            // BƯỚC QUAN TRỌNG: Chốt dữ liệu từ giao diện lưới vào DataTable
+            if (dgvTD != null) dgvTD.EndEdit();
 
+            // 1. Lấy danh sách các món đã được tích chọn "Chon"
+            var dtGrid = dgvTD.DataSource as DataTable;
+            if (dtGrid == null) return;
+
+            var selectedItems = dtGrid.AsEnumerable()
+                .Where(r => r.Field<bool?>("Chon") == true)
+                .Select(r => new {
+                    MaTD = r["MaTD"].ToString(),
+                    SL = Math.Max(1, AsInt(r["SL"], 1)),
+                    Gia = AsDec(r["GiaTien"], 0m)
+                }).ToList();
+
+            // Kiểm tra nếu chưa chọn món
+            if (!selectedItems.Any())
+            {
+                MessageBox.Show("Vui lòng tích chọn ít nhất một món ăn trước khi tạo phiếu!", "Thiếu dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Kiểm tra thông tin phòng ca cho khách mới
+            if (!_isExistingBooking && !chkOrderLe.Checked)
+            {
+                if (cbPhong.SelectedIndex == -1 || string.IsNullOrWhiteSpace(cbPhong.Text))
+                {
+                    MessageBox.Show("Vui lòng chọn Phòng cho khách mới!", "Thông báo");
+                    return;
+                }
+            }
+
+            using (var cn = new SqlConnection(CONN))
+            {
+                cn.Open();
+                using (var tx = cn.BeginTransaction())
+                {
+                    try
+                    {
+                        // LUỒNG 1: NẾU LÀ KHÁCH MỚI HOẶC ORDER LẺ -> TẠO ĐẦU MỤC PHIẾU
+                        if (!_isExistingBooking)
+                        {
+                            
+                            // O/P (1) + dd (2) + HH (2) + mm (2) + ss (2) = 9 ký tự (Vẫn dư 1 chỗ trống an toàn)
+                            _currentSoPhieu = (chkOrderLe.Checked ? "O" : "P") + DateTime.Now.ToString("ddHHmmss");
+                            
+                            string sqlInsertDT = @"INSERT INTO DatTiec(SoPhieu, NgayDK, NgayDatNgay, MATK, MANV, SoLuongKhach, PHONG, Ca, TrangThai) 
+                                           VALUES(@sp, GETDATE(), CAST(GETDATE() AS DATE), @maTK, @maNV, @sl, @phong, @ca, N'CHO_TT')";
+
+                            using (var cmd = new SqlCommand(sqlInsertDT, cn, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@sp", _currentSoPhieu);
+                                cmd.Parameters.AddWithValue("@maTK", (chkOrderLe.Checked || cbKhach.SelectedValue == null) ? DBNull.Value : cbKhach.SelectedValue);
+                                // Đảm bảo parameter @maNV luôn có giá trị (nếu null thì gửi giá trị NULL của DB)
+                                cmd.Parameters.AddWithValue("@maNV", (object)CurrentManv ?? DBNull.Value);
+                                cmd.Parameters.AddWithValue("@sl", (int)numSoLuongKhach.Value);
+                                cmd.Parameters.AddWithValue("@phong", chkOrderLe.Checked ? "Bàn lẻ" : cbPhong.Text);
+                                cmd.Parameters.AddWithValue("@ca", chkOrderLe.Checked ? "Tại chỗ" : cbCa.Text);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // LUỒNG 2: GHI MÓN ĂN (Hỗ trợ cộng dồn nếu khách gọi thêm món cũ)
+                        foreach (var item in selectedItems)
+                        {
+                            // Kiểm tra món đã có trong phiếu chưa
+                            string sqlCheck = "SELECT COUNT(*) FROM CTDatTiec WHERE SoPhieu=@sp AND MaTD=@ma";
+                            int count = 0;
+                            using (var cmdChk = new SqlCommand(sqlCheck, cn, tx))
+                            {
+                                cmdChk.Parameters.AddWithValue("@sp", _currentSoPhieu);
+                                cmdChk.Parameters.AddWithValue("@ma", item.MaTD);
+                                count = (int)cmdChk.ExecuteScalar();
+                            }
+
+                            if (count > 0) // NẾU ĐÃ CÓ MÓN NÀY -> CỘNG DỒN
+                            {
+                                string sqlUpdate = "UPDATE CTDatTiec SET SoLuong = SoLuong + @sl WHERE SoPhieu=@sp AND MaTD=@ma";
+                                using (var cmdUp = new SqlCommand(sqlUpdate, cn, tx))
+                                {
+                                    cmdUp.Parameters.AddWithValue("@sl", item.SL);
+                                    cmdUp.Parameters.AddWithValue("@sp", _currentSoPhieu);
+                                    cmdUp.Parameters.AddWithValue("@ma", item.MaTD);
+                                    cmdUp.ExecuteNonQuery();
+                                }
+                            }
+                            else // NẾU CHƯA CÓ -> THÊM MỚI DÒNG CHI TIẾT
+                            {
+                                string sqlCt = "INSERT INTO CTDatTiec(SoPhieu, MaTD, SoLuong, GiaBan) VALUES(@sp, @ma, @sl, @gia)";
+                                using (var cmd = new SqlCommand(sqlCt, cn, tx))
+                                {
+                                    cmd.Parameters.AddWithValue("@sp", _currentSoPhieu);
+                                    cmd.Parameters.AddWithValue("@ma", item.MaTD);
+                                    cmd.Parameters.AddWithValue("@sl", item.SL);
+                                    cmd.Parameters.AddWithValue("@gia", item.Gia);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // LUÔN TRỪ TỒN KHO
+                            string sqlStock = "UPDATE ThucDon SET SoLuongTon = SoLuongTon - @sl WHERE MaTD = @ma AND SoLuongTon >= @sl";
+                            using (var cmdStock = new SqlCommand(sqlStock, cn, tx))
+                            {
+                                cmdStock.Parameters.AddWithValue("@sl", item.SL);
+                                cmdStock.Parameters.AddWithValue("@ma", item.MaTD);
+                                if (cmdStock.ExecuteNonQuery() == 0)
+                                    throw new Exception($"Món {item.MaTD} không đủ số lượng tồn kho!");
+                            }
+                        }
+
+                        tx.Commit();
+                        MessageBox.Show($"Thành công! Món ăn đã được thêm vào phiếu: {_currentSoPhieu}", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // --- ĐOẠN SỬA ĐỔI ---
+                        if (chkOrderLe.Checked)
+                        {
+                            // Nếu là khách lẻ (mua xong đi luôn hoặc trả tiền luôn), reset form để đón khách mới
+                            btnMoi.PerformClick();
+                        }
+                        else
+                        {
+                            // Nếu là khách đặt bàn (đang ngồi ăn), GIỮ NGUYÊN thông tin khách để có thể gọi thêm món tiếp
+                            // Chỉ cần bỏ chọn các món trên lưới và reload lại tồn kho
+                            var dt = dgvTD.DataSource as DataTable;
+                            if (dt != null)
+                            {
+                                foreach (DataRow r in dt.Rows)
+                                {
+                                    r["Chon"] = false;
+                                    r["SL"] = 1; // Reset số lượng về mặc định
+                                }
+                            }
+                            // Cập nhật lại tổng tiền về 0 (cho lần gọi tiếp theo)
+                            txtTongTien.Text = "0";
+                        }
+
+                        LoadThucDon(); // Tải lại lưới để cập nhật số lượng tồn mới nhất
+                    }
+                    catch (Exception ex)
+                    {
+                        tx.Rollback();
+                        MessageBox.Show("Lỗi xử lý: " + ex.Message, "Thông báo lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
         }
     }
 }

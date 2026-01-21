@@ -13,15 +13,29 @@ namespace GUI_QLNH
     public partial class FormThucDon : Form
     {
         private const string SelectColName = "Chon";
+            private bool isAdding = false; // Biến đánh dấu trạng thái: true là đang thêm, false là đang sửa
 
         public FormThucDon()
         {
             InitializeComponent();
             SetupGrid();
+            LoadDVTIntoCombobox();
             LoadData();
         }
 
         // =================== LOAD DỮ LIỆU DB ===================
+        private void LoadDVTIntoCombobox()
+        {
+            try
+            {
+                // Gọi BLL để lấy danh sách từ bảng DonViTinh trong SQL
+                cboDVT.DataSource = ThucDonBLL.GetListDVT();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Lỗi tải danh sách ĐVT: " + ex.Message);
+            }
+        }
         private void LoadData()
         {
             dgvThucDon.DataSource = ThucDonBLL.GetAll();
@@ -89,7 +103,7 @@ namespace GUI_QLNH
         {
             txtMaTD.Clear();
             txtTenMon.Clear();
-            txtDVT.Clear();
+            if (cboDVT.Items.Count > 0) cboDVT.SelectedIndex = 0;
             txtGiaTien.Clear();
             txtGhiChu.Clear();
             txtSoLuongTon.Clear();
@@ -117,7 +131,7 @@ namespace GUI_QLNH
             {
                 MaTD = txtMaTD.Text.Trim(),
                 TenMon = txtTenMon.Text.Trim(),
-                DVT = txtDVT.Text.Trim(),
+                DVT = cboDVT.Text,
                 GiaTien = gia,
                 GhiChu = txtGhiChu.Text.Trim(),
                 SoLuongTon = soLuongTon
@@ -130,7 +144,8 @@ namespace GUI_QLNH
 
             txtMaTD.Text = Convert.ToString(row.Cells["MaTD"]?.Value);
             txtTenMon.Text = Convert.ToString(row.Cells["TenMon"]?.Value);
-            txtDVT.Text = Convert.ToString(row.Cells["DVT"]?.Value);
+            string dvtValue = Convert.ToString(row.Cells["DVT"]?.Value);
+            cboDVT.Text = dvtValue;
             txtGiaTien.Text = Convert.ToString(row.Cells["GiaTien"]?.Value);
             txtGhiChu.Text = Convert.ToString(row.Cells["GhiChu"]?.Value);
 
@@ -143,7 +158,9 @@ namespace GUI_QLNH
         // =================== BUTTON HANDLERS ===================
         private void btnThem_Click(object sender, EventArgs e)
         {
+            isAdding = true;           // Bật trạng thái thêm mới
             ResetForm();
+            txtMaTD.ReadOnly = false;  // Cho phép nhập mã món mới
             txtMaTD.Focus();
         }
 
@@ -152,33 +169,52 @@ namespace GUI_QLNH
             try
             {
                 var td = ReadForm();
+
+                // Kiểm tra trống cơ bản tại GUI (để đỡ phải gọi xuống BLL)
                 if (string.IsNullOrWhiteSpace(td.MaTD) || string.IsNullOrWhiteSpace(td.TenMon))
                 {
                     MessageBox.Show("Mã và Tên món không được để trống!");
                     return;
                 }
 
-                var existed = ThucDonBLL.GetAll().Find(x => x.MaTD == td.MaTD);
-                bool result = existed == null
-                    ? ThucDonBLL.Insert(td)
-                    : ThucDonBLL.Update(td);
-
-                if (result)
+                if (isAdding) // --- XỬ LÝ THÊM MỚI ---
                 {
-                    MessageBox.Show(existed == null
-                        ? "Thêm thành công!"
-                        : "Cập nhật thành công!");
-                    LoadData();
-                    ResetForm();
+                    // Gọi BLL.Insert (BLL này đã được cập nhật để check trùng mã ở bước trước)
+                    if (ThucDonBLL.Insert(td))
+                    {
+                        MessageBox.Show("Thêm mới món ăn thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        ResetForm();
+                    }
                 }
-                else
+                else // --- XỬ LÝ CẬP NHẬT ---
                 {
-                    MessageBox.Show("Thao tác thất bại!");
+                    // Kiểm tra xem mã có tồn tại không trước khi sửa
+                    var all = ThucDonBLL.GetAll();
+                    var existed = all.Find(x => x.MaTD == td.MaTD);
+
+                    if (existed == null)
+                    {
+                        MessageBox.Show("Món ăn này không còn tồn tại trên hệ thống!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    if (ThucDonBLL.Update(td))
+                    {
+                        MessageBox.Show("Cập nhật thông tin thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        ResetForm();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Không có thay đổi nào được thực hiện hoặc cập nhật thất bại.");
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Lỗi");
+                // Bắt các lỗi throw từ BLL (Ví dụ: "Mã món đã tồn tại", "Mã quá 10 ký tự"...)
+                MessageBox.Show(ex.Message, "Lỗi dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -191,71 +227,104 @@ namespace GUI_QLNH
         {
             if (string.IsNullOrWhiteSpace(txtMaTD.Text))
             {
-                MessageBox.Show("Chọn một dòng để sửa!");
+                MessageBox.Show("Vui lòng chọn một món ăn từ danh sách để sửa!");
                 return;
             }
 
-            MessageBox.Show("Hãy chỉnh thông tin ở khung trên và nhấn Lưu để cập nhật!");
+            isAdding = false;         // Bật trạng thái sửa
+            txtMaTD.ReadOnly = true;  // Khóa mã món (không cho sửa Primary Key)
             txtTenMon.Focus();
+         
         }
 
         private void btnXoa_Click(object sender, EventArgs e)
         {
             try
             {
-                dgvThucDon.EndEdit(); // chốt giá trị checkbox trước khi đọc
+                dgvThucDon.EndEdit();
                 var ids = GetCheckedIds();
 
+                // TRƯỜNG HỢP 1: XÓA HÀNG LOẠT
                 if (ids.Count > 0)
                 {
-                    if (MessageBox.Show(
-                        $"Xóa {ids.Count} món ăn đã chọn?",
-                        "Xác nhận",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Warning) != DialogResult.Yes)
-                        return;
-
-                    int ok = 0, fail = 0;
-                    foreach (var id in ids)
+                    if (MessageBox.Show($"Bạn đã chọn {ids.Count} món. Hệ thống sẽ xóa các món hợp lệ và giữ lại các món đang có hóa đơn. Tiếp tục?",
+                        "Xác nhận", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
-                        if (ThucDonBLL.Delete(id)) ok++; else fail++;
-                    }
+                        int ok = 0;
+                        int fail = 0;
+                        List<string> failedIds = new List<string>();
 
-                    LoadData();
-                    ResetForm();
-                    MessageBox.Show($"Đã xoá: {ok} | Không xoá được: {fail}");
-                }
-                else
-                {
-                    var maTD = txtMaTD.Text.Trim();
-                    if (string.IsNullOrWhiteSpace(maTD))
-                    {
-                        MessageBox.Show("Chọn một dòng để xóa hoặc tick chọn trong lưới!");
-                        return;
-                    }
+                        foreach (var id in ids)
+                        {
+                            try
+                            {
+                                // Gọi xóa từng món
+                                if (ThucDonBLL.Delete(id))
+                                {
+                                    ok++;
+                                }
+                                else
+                                {
+                                    fail++;
+                                    failedIds.Add(id);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                // Nếu món này dính khóa ngoại (foreign key), catch sẽ bắt tại đây
+                                // Vòng lặp vẫn tiếp tục chạy cho các id tiếp theo
+                                fail++;
+                                failedIds.Add($"{id} (Dính hóa đơn)");
+                            }
+                        }
 
-                    if (MessageBox.Show(
-                        "Xoá món ăn này?",
-                        "Xác nhận",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question) != DialogResult.Yes)
-                        return;
+                        // Thông báo tổng kết
+                        string resultMsg = $"Đã xóa thành công {ok} món.";
+                        if (fail > 0)
+                        {
+                            resultMsg += $"\nThất bại {fail} món: {string.Join(", ", failedIds)}";
+                        }
 
-                    if (ThucDonBLL.Delete(maTD))
-                    {
-                        MessageBox.Show("Xoá thành công!");
+                        MessageBox.Show(resultMsg, "Kết quả xóa hàng loạt",
+                            MessageBoxButtons.OK, fail > 0 ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+
                         LoadData();
                         ResetForm();
                     }
-                    else
+                }
+                // TRƯỜNG HỢP 2: XÓA ĐƠN LẺ
+                else
+                {
+                    string maTD = txtMaTD.Text.Trim();
+                    if (string.IsNullOrWhiteSpace(maTD))
                     {
-                        MessageBox.Show("Không thể xoá!");
+                        MessageBox.Show("Vui lòng chọn một món ăn trên lưới hoặc tích vào ô 'Chọn' để xóa!",
+                            "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    if (MessageBox.Show($"Xóa món ăn có mã: {maTD}?", "Xác nhận",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                    {
+                        try
+                        {
+                            if (ThucDonBLL.Delete(maTD))
+                            {
+                                MessageBox.Show("Xóa thành công!");
+                                LoadData();
+                                ResetForm();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Không thể xóa món này do đang tồn tại trong các hóa đơn cũ.", "Lỗi ràng buộc", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, "Lỗi");
+                MessageBox.Show("Lỗi không xác định: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
